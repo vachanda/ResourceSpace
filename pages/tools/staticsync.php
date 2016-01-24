@@ -229,6 +229,7 @@ function ProcessFolder($folder)
 
                     $name = (count($e) == 1) ? '' : $e[count($e)-2];
                     echo "Collection $name, theme=$theme" . PHP_EOL;
+                    $ul_username = $theme;
                     $escaped_name = escape_check($name);
                     $collection = sql_value("SELECT ref value FROM collection WHERE name='$escaped_name' AND $themesql", 0);
                     if ($collection == 0)
@@ -286,6 +287,18 @@ function ProcessFolder($folder)
                         
                         update_field($r, $staticsync_mapped_category_tree, "," . join(",", $path_parts));
                         }           
+
+                    #This is an override to add user data to the resouces
+                    if(!isset($userref))
+                        {
+                            $ul_username = ucfirst(strtolower($ul_username));
+                            $current_user_ref = sql_query("Select ref from user where fullname = 'Vachan' ");
+                            if(!empty($current_user_ref))
+                            {
+                                $current_user_ref = $current_user_ref[0]['ref'];
+                                sql_query("UPDATE resource SET created_by='$current_user_ref' where ref = $r");
+                            }
+                        }
 
                     # default access level. This may be overridden by metadata mapping.
                     $accessval = 0;
