@@ -569,7 +569,7 @@ $show_theme_collection_stats=false; # Show count of themes and resources in them
 
 # How many levels of theme category to show.
 # If this is set to more than one, a dropdown box will appear to allow browsing of theme sub-levels
-$theme_category_levels=1;
+$theme_category_levels=7;
 
 # Theme direct jump mode
 # If set, sub category levels DO NOT appear and must be directly linked to using custom home panels or top navigation items (or similar).
@@ -762,7 +762,7 @@ $user_preferences = true;
 # List of active plugins.
 # Note that multiple plugins must be specified within array() as follows:
 # $plugins=array("loader","rss","messaging","googledisplay"); 
-$plugins=array();
+$plugins=array("api_collection");
 
 # Uncomment and set the next line to allow anonymous access. 
 # You must set this to the USERNAME of the USER who will represent all your anonymous users
@@ -1053,7 +1053,7 @@ $store_uploadedrefs=false;
 
 # Always record the name of the resource creator for new records.
 # If false, will only record when a resource is submitted into a provisional status.
-$always_record_resource_creator = true;
+$always_record_resource_creator = false;
 
 # Enable the 'related resources' field when editing resources.
 $enable_related_resources=true;
@@ -1834,21 +1834,21 @@ $paypal_url="https://www.paypal.com/cgi-bin/webscr";
 # StaticSync (staticsync.php)
 # The ability to synchronise ResourceSpace with a separate and stand-alone filestore.
 # ------------------------------------------------------------------------------------------------------------------
-$syncdir="/var/www/r2000/accounted"; # The sync folder
+$syncdir="/Users/hansika/resourcespace"; # The sync folder
 $nogo="[folder1]"; # A list of folders to ignore within the sign folder.
 # Maximum number of files to process per execution of staticsync.php
 $staticsync_max_files = 10000;
 $staticsync_autotheme=true; # Automatically create themes based on the first and second levels of the sync folder structure.
 # Allow unlimited theme levels to be created based on the folder structure. 
 # Script will output a new $theme_category_levels number which must then be updated in config.php
-$staticsync_folder_structure=false;
+$staticsync_folder_structure=true;
 # Mapping extensions to resource types for sync'd files
 # Format: staticsync_extension_mapping[resource_type]=array("extension 1","extension 2");
 $staticsync_extension_mapping_default=1;
 $staticsync_extension_mapping[3]=array("mov","3gp","avi","mpg","mp4","flv"); # Video
 $staticsync_extension_mapping[4]=array("flv");
 # Uncomment and set the next line to specify a category tree field to use to store the retieved path information for each file. The tree structure will be automatically modified as necessary to match the folder strucutre within the sync folder (performance penalty).
-# $staticsync_mapped_category_tree=50;
+ $staticsync_mapped_category_tree=50;
 # Uncomment and set the next line to specify a text field to store the retrieved path information for each file. This is a time saving alternative to the option above.
 # $staticsync_filepath_to_field=100;
 # Append multiple mapped values instead of overwritting? This will use the same appending methods used when editing fields. Not used on dropdown, date, categroy tree, datetime, or radio buttons
@@ -1857,7 +1857,7 @@ $staticsync_extension_mapping_append_values=true;
 $staticsync_title_includes_path=true;
 # Should the sync'd resource files be 'ingested' i.e. moved into ResourceSpace's own filestore structure?
 # In this scenario, the sync'd folder merely acts as an upload mechanism. If path to metadata mapping is used then this allows metadata to be extracted based on the file's location.
-$staticsync_ingest=false;
+$staticsync_ingest=true;
 # Try to rotate images automatically when not ingesting resources? If set to TRUE you must also set $imagemagick_preserve_profiles=true;
 $autorotate_no_ingest=false;
 # Try to rotate images automatically when ingesting resources? If set to TRUE you must also set $imagemagick_preserve_profiles=true;
@@ -2173,7 +2173,7 @@ $wildcard_always_applied=false;
 $U_perm_strict=false;
 
 # enable remote apis (if using API, RSS2, or other plugins that allow remote authentication via an api key)
-$enable_remote_apis=false;
+$enable_remote_apis=true;
 $api_scramble_key="abcdef123";
 
 # Allow users capable of deleting a full collection (of resources) to do so from the Collection Manage page.
