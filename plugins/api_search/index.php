@@ -62,6 +62,7 @@ $test_query=rtrim($test_query,"&");
 if ($collection!=""){$searchadd="!collection".$collection.", ";} else {$searchadd="";}
 
 $results=do_search($searchadd.$search,$restypes,$order_by,$archive,-1,$sort,false,$starsearch);
+file_put_contents("/Users/hansika/search_api_result_65.txt", print_r($results,true));
 if(!is_array($results)) {
     $results=array();
 }
@@ -144,6 +145,7 @@ if (getval("previewsize","")!=""){
         $use_watermark=check_use_watermark();
         $filepath=get_resource_path($results[$n]['ref'],true,getval('previewsize',''),false,'jpg',-1,1,$use_watermark,'',-1);
         $previewpath=get_resource_path($results[$n]['ref'],false,getval("previewsize",""),false,"jpg",-1,1,$use_watermark,"",-1);
+        file_put_contents("/Users/hansika/search_api_filepath.txt", "filepath: $filepath, Preview: $previewpath" );
 
         if (file_exists($filepath)){
             $results[$n]['preview']=$previewpath;
@@ -230,9 +232,11 @@ if($metadata) {
     }
     // Build api_search field string in order to find the fields:
     $fields = sql_query('SELECT ref, title FROM resource_type_field WHERE ref IN (' . $api_search_full_field_data . ');');
+    file_put_contents("/Users/hansika/search_api_result_222.txt", print_r($api_search_full_field_data,true));
     foreach ($fields as $field) {
         $full_fields_options['field' . $field['ref']] = $field['title'];
     }
+    #file_put_contents("/Users/hansika/search_api_result_222.txt", print_r($full_fields_options,true));
     for($i = 0; $i < count($results); $i++) {
     
         $full_field_data_ids_list = '';
@@ -281,9 +285,38 @@ if($metadata) {
 
         }
 
+    #Restructure the Results JSON.
+    $im_identify_path = get_utility_path('im-identify');
+    $get_height_cmd = $im_identify_path . " -format '%[fx:h]' ";
+    $get_width_cmd = $im_identify_path . " -format '%[fx:w]' ";
+
+    $sizes = array();
+
+    foreach ($image_alternatives[trim($results[$i]['image_classification'])] as $index => $value) {
+        $path_array = explode('/', $results[$i]['original_filepath']);
+        array_pop($path_array);
+        array_pop($path_array);
+        $alt_path = implode('/', $path_array) . '/resized/' . $results[$i]['Title'] . '_' . $value['filename'] .'.' . $results[$i]['file_extension'] ;
+        $alt_height_cmd = $get_height_cmd . $alt_path;
+        $alt_width_cmd = $get_width_cmd . $alt_path;
+        $sizes[$value['name']]['file_path'] = $alt_path;
+        $sizes[$value['name']]['size'] = array('height' => shell_exec($alt_height_cmd), 'width' => shell_exec($alt_width_cmd));
     }
 
+    $get_height_cmd .= $results[$i]['original_filepath'];
+    $get_width_cmd .= $results[$i]['original_filepath'];
+
+    $sizes['original']['file_path']  = $results[$i]['original_filepath'];
+
+    $sizes['original']['size'] = array('height' => shell_exec($get_height_cmd), 'width' => shell_exec($get_width_cmd));
+
+    $results[$i]['sizes'] = $sizes;
+
+    unset($results[$i]['original_filepath']);
+    ksort($results[$i]);
+    }
 }
+
 
 if (getval("content","")=="xml" && !$paginate){
     header('Content-type: application/xml');
