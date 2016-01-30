@@ -1127,7 +1127,7 @@ $category_tree_open=false;
 $category_tree_show_status_window=true;
 
 # Should searches using the category tree use AND for heirarchical keys?
-$category_tree_search_use_and=false;
+$category_tree_search_use_and=true;
 
 # Length of a user session. This is used for statistics (user sessions per day) and also for auto-log out if $session_autologout is set.
 $session_length=30;
@@ -1742,7 +1742,34 @@ $request_adds_to_collection=false;
 # The blocks must be numbered sequentially (0, 1, 2).
 # 'params' are any extra parameters to pass to ImageMagick for example DPI
 # 'source_extensions' is a comma-separated list of the files that will be processed, e.g. "eps,png,gif" (note no spaces).
-#
+$image_alternatives["Catalog"][0]["name"]="Thumbnail";
+$image_alternatives["Catalog"][0]["source_extensions"]="eps,png,gif,jpg";
+$image_alternatives["Catalog"][0]["filename"]="thumbnail";
+$image_alternatives["Catalog"][0]["target_extension"]="";
+$image_alternatives["Catalog"][0]["params"]="-resize 65X35"; # 300 dpi
+$image_alternatives["Catalog"][0]["icc"]=false;
+
+$image_alternatives["Catalog"][1]["name"]="SlideShow";
+$image_alternatives["Catalog"][1]["source_extensions"]="eps,png,gif,jpg";
+$image_alternatives["Catalog"][1]["filename"]="slideshow";
+$image_alternatives["Catalog"][1]["target_extension"]="";
+$image_alternatives["Catalog"][1]["params"]="-resize 610X330"; # 300 dpi
+$image_alternatives["Catalog"][1]["icc"]=false;
+
+$image_alternatives["SecondSales"][0]["name"]="Thumbnail";
+$image_alternatives["SecondSales"][0]["source_extensions"]="eps,png,gif,jpg";
+$image_alternatives["SecondSales"][0]["filename"]="thumbnail";
+$image_alternatives["SecondSales"][0]["target_extension"]="";
+$image_alternatives["SecondSales"][0]["params"]="-resize 65X35"; # 300 dpi
+$image_alternatives["SecondSales"][0]["icc"]=false;
+
+$image_alternatives["SecondSales"][1]["name"]="SlideShow";
+$image_alternatives["SecondSales"][1]["source_extensions"]="eps,png,gif,jpg";
+$image_alternatives["SecondSales"][1]["filename"]="slideshow";
+$image_alternatives["SecondSales"][1]["target_extension"]="";
+$image_alternatives["SecondSales"][1]["params"]="-resize 610X330"; # 300 dpi
+$image_alternatives["SecondSales"][1]["icc"]=false;
+
 # Example - automatically create a PNG file alternative when an EPS file is uploaded.
 # $image_alternatives[0]["name"]="PNG File";
 # $image_alternatives[0]["source_extensions"]="eps";
@@ -1848,13 +1875,13 @@ $staticsync_extension_mapping_default=1;
 $staticsync_extension_mapping[3]=array("mov","3gp","avi","mpg","mp4","flv"); # Video
 $staticsync_extension_mapping[4]=array("flv");
 # Uncomment and set the next line to specify a category tree field to use to store the retieved path information for each file. The tree structure will be automatically modified as necessary to match the folder strucutre within the sync folder (performance penalty).
- $staticsync_mapped_category_tree=50;
+$staticsync_mapped_category_tree=73;
 # Uncomment and set the next line to specify a text field to store the retrieved path information for each file. This is a time saving alternative to the option above.
 # $staticsync_filepath_to_field=100;
 # Append multiple mapped values instead of overwritting? This will use the same appending methods used when editing fields. Not used on dropdown, date, categroy tree, datetime, or radio buttons
 $staticsync_extension_mapping_append_values=true;
 # Should the generated resource title include the sync folder path?
-$staticsync_title_includes_path=true;
+$staticsync_title_includes_path=false;
 # Should the sync'd resource files be 'ingested' i.e. moved into ResourceSpace's own filestore structure?
 # In this scenario, the sync'd folder merely acts as an upload mechanism. If path to metadata mapping is used then this allows metadata to be extracted based on the file's location.
 $staticsync_ingest=true;
@@ -1868,7 +1895,85 @@ $staticsync_defaultstate=0;
 # Uncomment and set to the ref of the user account that the staticsync resources will be 'created by' 
 # $staticsync_userref=-1;
 
-#
+$staticsync_mapfolders[0]=array
+		(
+		"match"=>"/Catalog/",
+		"field"=>75,
+		"level"=>1
+		);
+$staticsync_mapfolders[1]=array
+		(
+		"match"=>"/SecondSales/",
+		"field"=>75,
+		"level"=>1
+		);
+$staticsync_mapfolders[2]=array
+		(
+		"match"=>"/Catalog/",
+		"field"=>76,
+		"level"=>2
+		);
+$staticsync_mapfolders[3]=array
+		(
+		"match"=>"/SecondSales/",
+		"field"=>76,
+		"level"=>2
+		);
+$staticsync_mapfolders[4]=array
+		(
+		"match"=>"/Catalog/",
+		"field"=>77,
+		"level"=>3
+		);
+$staticsync_mapfolders[5]=array
+		(
+		"match"=>"/SecondSales/",
+		"field"=>77,
+		"level"=>3
+		);
+$staticsync_mapfolders[6]=array
+		(
+		"match"=>"/Catalog/",
+		"field"=>79,
+		"level"=>4
+		);
+$staticsync_mapfolders[7]=array
+		(
+		"match"=>"/SecondSales/",
+		"field"=>78,
+		"level"=>4
+		);
+$staticsync_mapfolders[8]=array
+		(
+		"match"=>"/Catalog/",
+		"field"=>80,
+		"level"=>5
+		);
+$staticsync_mapfolders[9]=array
+		(
+		"match"=>"/SecondSales/",
+		"field"=>79,
+		"level"=>5
+		);
+$staticsync_mapfolders[10]=array
+		(
+		"match"=>"/Catalog/",
+		"field"=>81,
+		"level"=>6
+		);
+$staticsync_mapfolders[11]=array
+		(
+		"match"=>"/SecondSales/",
+		"field"=>80,
+		"level"=>6
+		);
+$staticsync_mapfolders[12]=array
+		(
+		"match"=>"/SecondSales/",
+		"field"=>81,
+		"level"=>7
+		);
+
 # StaticSync Path to metadata mapping
 # ------------------------
 # It is possible to take path information and map selected parts of the path to metadata fields.
@@ -2471,7 +2576,7 @@ $download_filename_id_only = false;
 $download_id_only_with_size = false;
 
 # Index the 'contributed by' field?
-$index_contributed_by=false;
+$index_contributed_by=True;
 
 # Index the resource type, so searching for the resource type string will work (e.g. if you have a resource of type "photo" then "cat photo" will match even if the resource metadata itself doesn't contain the word 'photo')
 $index_resource_type=true;
