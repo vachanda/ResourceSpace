@@ -1704,7 +1704,6 @@ function update_resource($r,$path,$type,$title,$ingest=false,$createPreviews=tru
 
 	# Work out extension based on path
 	$extension=explode(".",$path);
-        
         if(count($extension)>1)
             {
             $extension=trim(strtolower(end($extension)));
@@ -1714,11 +1713,11 @@ function update_resource($r,$path,$type,$title,$ingest=false,$createPreviews=tru
             //No extension
             $extension="";
             }
-            
-
+   
+        echo realpath($path);
 	# file_path should only really be set to indicate a staticsync location. Otherwise, it should just be left blank.
 	if ($ingest){$file_path="";} else {$file_path=escape_check($path);}
-
+    #$file_path = escape_check($path);
 	# Store extension/data in the database
 	sql_query("update resource set archive=0,file_path='".$file_path."',file_extension='$extension',preview_extension='$extension',file_modified=now() where ref='$r'");
 
@@ -1751,15 +1750,17 @@ function update_resource($r,$path,$type,$title,$ingest=false,$createPreviews=tru
 		# Move the file
 		global $syncdir;
 		$destination=get_resource_path($r,true,"",true,$extension);
-		$result=rename($syncdir . "/" . $path,$destination);
-		if ($result===false)
-			{
+		#echo $destination, "********************************", $path . PHP_EOL;
+		symlink($path, $destination);
+		#$result=rename($syncdir . "/" . $path,$destination);
+		#if ($result===false)
+		#	{
 			# The rename failed. The file is possibly still being copied or uploaded and must be ignored on this pass.
 			# Delete the resouce just created and return false.
-			delete_resource($r);
-			return false;
-			}
-		chmod($destination,0777);
+		#	delete_resource($r);
+		#	return false;
+		#	}
+		#chmod($destination,0777);
 		}
 
 	# generate title and extract embedded metadata
