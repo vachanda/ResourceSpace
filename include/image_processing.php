@@ -907,6 +907,7 @@ function create_previews($ref,$thumbonly=false,$extension="jpg",$previewonly=fal
 		}
 	else if (!$previewonly)
 		{
+		#Original images path.
 		$file=get_resource_path($ref,true,"",false,$extension,-1,1,false,"",$alternative);
 		}
 	else
@@ -914,7 +915,6 @@ function create_previews($ref,$thumbonly=false,$extension="jpg",$previewonly=fal
 		# We're generating based on a new preview (scr) image.
 		$file=get_resource_path($ref,true,"tmp",false,"jpg");	
 		}
-	
 	# Debug
 	debug("File source is $file");
 	# Make sure the file exists, if not update preview_attempts so that we don't keep trying to generate a preview
@@ -939,63 +939,89 @@ function create_previews($ref,$thumbonly=false,$extension="jpg",$previewonly=fal
 
 	# Handle alternative image file generation.
 	global $image_alternatives;
-	if (isset($image_alternatives) && $alternative==-1){
-		for($n=0;$n<count($image_alternatives);$n++){
-			$exts=explode(",",$image_alternatives[$n]["source_extensions"]);
-			if (in_array($extension,$exts))
-				{
-				
-				# Remove any existing alternative file(s) with this name.
-				$existing=sql_query("select ref from resource_alt_files where resource='$ref' and name='" . escape_check($image_alternatives[$n]["name"]) . "'");
-				for ($m=0;$m<count($existing);$m++)
-					{
-					delete_alternative_file($ref,$existing[$m]["ref"]);
-					}
-					
-				# Create the alternative file.
-				$aref=add_alternative_file($ref,$image_alternatives[$n]["name"]);
-				$apath=get_resource_path($ref,true,"",true,$image_alternatives[$n]["target_extension"],-1,1,false,"",$aref);
-				
-				$source_profile = '';
-				if ($image_alternatives[$n]["icc"] === true)
-					{
-					$iccpath = get_resource_path($ref,true,'',false,$extension).'.icc';
-					global $icc_extraction;
-	                global $ffmpeg_supported_extensions;
-					if (!file_exists($iccpath) && $extension!="pdf" && !in_array($extension,$ffmpeg_supported_extensions))
-						{
-						// extracted profile doesn't exist. Try extracting.
-						extract_icc_profile($ref,$extension);
-						}
-					if (file_exists($iccpath))
-						{
-						$source_profile = ' -strip -profile ' . $iccpath;
-						}
-					}
 
-				# Process the image
-				$version=get_imagemagick_version();
-				if($version[0]>5 || ($version[0]==5 && $version[1]>5) || ($version[0]==5 && $version[1]==5 && $version[2]>7 ))
-					{
-					// Use the new imagemagick command syntax (file then parameters)
-					$command = $convert_fullpath . ' ' . escapeshellarg($file) . (($extension == 'psd') ? '[0] +matte' : '') . $source_profile . ' ' . $image_alternatives[$n]['params'] . ' ' . escapeshellarg($apath);
-					}
-				else
-					{
-					// Use the old imagemagick command syntax (parameters then file)
-					$command = $convert_fullpath . $source_profile . " " . $image_alternatives[$n]["params"] . " " . escapeshellarg($file) . " " . escapeshellarg($apath);
-					}
-			
+	if (isset($image_alternatives) && $alternative==-1) {
+		foreach ($image_alternatives as $classification => $resize_image) {
+			$temp_query = "select resource_type_field from resource_data where value rlike '$classification' and resource = '$ref'";
+        	$classification_ref = sql_query($temp_query);
+        	if(empty($classification_ref)) {
+            	continue;
+        	}
+        	foreach ($resize_image as $index => $resize_value) {
+            	$exts=explode(",",$resize_value["source_extensions"]);
+            	if (in_array($extension,$exts)) {
+                # Remove any existing alternative file(s) with this name.
+                	$existing=sql_query("select ref from resource_alt_files where resource='$ref' and name='" . escape_check($resize_value["name"]) . "'");
+                	for ($m=0;$m<count($existing);$m++)
+                    {
+                    	delete_alternative_file($ref,$existing[$m]["ref"]);
+                    }
+                    
+                # Create the alternative file.
+               		$resize_value["target_extension"] = sql_query("select file_extension from resource where ref = $ref", "")[0]["file_extension"];
+                	$aref=add_alternative_file($ref,$resize_value["name"]);
+                	$apath=get_resource_path($ref,true,"",true,$resize_value["target_extension"],-1,1,false,"",$aref);
                 
+                	$source_profile = '';
+                	if ($resize_value["icc"] === true)
+                    {
+                    	$iccpath = get_resource_path($ref,true,'',false,$extension).'.icc';
+                    	global $icc_extraction;
+                    	global $ffmpeg_supported_extensions;
+                    	if (!file_exists($iccpath) && $extension!="pdf" && !in_array($extension,$ffmpeg_supported_extensions))
+                        {
+                        // extracted profile doesn't exist. Try extracting.
+                        	extract_icc_profile($ref,$extension);
+                        }
+                    	if (file_exists($iccpath))
+                        {
+                        	$source_profile = ' -strip -profile ' . $iccpath;
+                        }
+                    }
+
+                #Original file name of the reource.
+
+                $original_name = sql_query("select field8 from resource where ref = $ref")[0]['field8'];
+
+                $actual_image_path = sql_value("SELECT value FROM resource_data where resource_type_field=(select ref from 
+                								resource_type_field where name='original_filepath') and resource = '$ref'", "");
+
+                $path_array = explode('/', $actual_image_path);
+                array_pop($path_array);
+                array_pop($path_array);
+                $resized_image_path = implode("/", $path_array) . '/resized/';
+
+                if (!file_exists($resized_image_path)) {
+                	mkdir($resized_image_path, 0777, true);
+                }
+
+                $resized_image_path = $resized_image_path . $original_name . '_' . $resize_value['filename'] . 
+                					  '.' . $resize_value['target_extension'];
+
+               	symlink($resized_image_path, $apath);
+                # Process the image
+                	$version=get_imagemagick_version();
+                	if($version[0]>5 || ($version[0]==5 && $version[1]>5) || ($version[0]==5 && $version[1]==5 && $version[2]>7 ))
+                    {
+                    // Use the new imagemagick command syntax (file then parameters)
+                    	$command = $convert_fullpath . ' ' . escapeshellarg($file) . (($extension == 'psd') ? '[0] +matte' : '') . $source_profile . ' ' . $resize_value['params'] . ' ' . escapeshellarg($resized_image_path);
+                    }
+                	else
+                    {
+                    // Use the old imagemagick command syntax (parameters then file)
+                    	$command = $convert_fullpath . $source_profile . " " . $resize_value["params"] . " " . escapeshellarg($file) . " " . escapeshellarg($resized_image_path);
+                    }
+
                 $output = run_command($command);
 
-				if (file_exists($apath)){
-					# Update the database with the new file details.
-					$file_size = filesize_unlimited($apath);
-					sql_query("update resource_alt_files set file_name='" . escape_check($image_alternatives[$n]["filename"] . "." . $image_alternatives[$n]["target_extension"]) . "',file_extension='" . escape_check($image_alternatives[$n]["target_extension"]) . "',file_size='" . $file_size . "',creation_date=now() where ref='$aref'");
-				}
-			}
-		}
+                if (file_exists($resized_image_path)){
+                    # Update the database with the new file details.
+                    $file_size = filesize_unlimited($apath);
+                    sql_query("update resource_alt_files set file_name='" . escape_check($original_name . "_" . $resize_value["filename"] . "." . $resize_value["target_extension"]) . "',file_extension='" . escape_check($resize_value["target_extension"]) . "',file_size='" . $file_size . "',creation_date=now() where ref='$aref'");
+                	}
+            	}
+        	}
+    	}
 	}	
 
 	

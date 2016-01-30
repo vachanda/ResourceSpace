@@ -86,11 +86,10 @@ function touch_category_tree_level($path_parts)
     $altered_tree  = false;
     $parent_search = 0;
     $nodename      = '';
-    
     for ($n=0; $n<count($path_parts); $n++)
         {
         # The node name should contain all the subsequent parts of the path
-        if ($n > 0) { $nodename .= "~"; }
+        if ($n > 0) { $nodename .= "/"; }
         $nodename .= $path_parts[$n];
         
         # Look for this node in the tree.       
@@ -98,6 +97,7 @@ function touch_category_tree_level($path_parts)
         for ($m=0; $m<count($tree); $m++)
             {
             $s = explode(",", $tree[$m]);
+            #print_r($s);
             if ((count($s)==3) && ($s[1]==$parent_search) && $s[2]==$nodename)
                 {
                 # A match!
@@ -129,12 +129,12 @@ function ProcessFolder($folder)
            $staticsync_autotheme, $staticsync_folder_structure, $staticsync_extension_mapping_default, 
            $staticsync_extension_mapping, $staticsync_mapped_category_tree, $staticsync_title_includes_path, 
            $staticsync_ingest, $staticsync_mapfolders, $staticsync_alternatives_suffix, $theme_category_levels, $staticsync_defaultstate,
-           $additional_archive_states,$staticsync_extension_mapping_append_values;
+           $additional_archive_states,$staticsync_extension_mapping_append_values, $image_alternatives;
     
     $collection = 0;
     
     echo "Processing Folder: $folder" . PHP_EOL;
-    
+    #$alt_path = get_resource_path(59, TRUE, '', FALSE, 'png', -1, 1, FALSE, '', 4);
     # List all files in this folder.
     $dh = opendir($folder);
     while (($file = readdir($dh)) !== false)
@@ -158,7 +158,6 @@ function ProcessFolder($folder)
             $extension="";
             }
        
-        
         if ($staticsync_mapped_category_tree)
             {
             $path_parts = explode("/", $shortpath);
@@ -187,7 +186,14 @@ function ProcessFolder($folder)
             
             $count++;
             if ($count > $staticsync_max_files) { return(true); }
-
+            date_default_timezone_set('Asia/Calcutta');
+            $last_sync_date = sql_value("select value from sysvars where name = 'last_sync'", "");
+            $file_creation_date = date("Y-m-d H:i:s" , filectime($fullpath));
+            if ((isset($last_sync_date)) && $last_sync_date > $file_creation_date)
+            {
+                echo "No new file found.." . PHP_EOL;
+                continue;
+            }
             # Already exists?
             if (!isset($done[$shortpath]))
                 {
@@ -265,7 +271,14 @@ function ProcessFolder($folder)
                 if ($modified_title !== false) { $title = $modified_title; }
 
                 # Import this file
-                $r = import_resource($shortpath, $type, $title, $staticsync_ingest);
+                #$r = import_resource($shortpath, $type, $title, $staticsync_ingest);
+                $r = import_resource($fullpath, $type, $title, $staticsync_ingest);
+                $original_filepath = sql_query("SELECT value FROM resource_data WHERE resource = '$r' AND 
+                                                resource_type_field = (SELECT ref FROM resource_type_field where name = 'original_filepath')");
+                if (isset($original_filepath)) {
+                    sql_query("INSERT INTO resource_data (resource,resource_type_field,value) 
+                                VALUES ('$r', (SELECT ref FROM resource_type_field WHERE name = 'original_filepath'), '$fullpath')");
+                }
                 if ($r !== false)
                     {
                     # Add to mapped category tree (if configured)
@@ -292,7 +305,7 @@ function ProcessFolder($folder)
                     if(!isset($userref))
                         {
                             $ul_username = ucfirst(strtolower($ul_username));
-                            $current_user_ref = sql_query("Select ref from user where fullname = 'Vachan' ");
+                            $current_user_ref = sql_query("Select ref from user where username = '$ul_username' ");
                             if(!empty($current_user_ref))
                             {
                                 $current_user_ref = $current_user_ref[0]['ref'];
@@ -355,7 +368,7 @@ function ProcessFolder($folder)
                                     else 
                                         {
                                         # Save the value
-                                        print_r($path_parts);
+                                        #print_r($path_parts);
                                         $value = $path_parts[$level-1];
                                         
                                         if($staticsync_extension_mapping_append_values){
@@ -380,7 +393,7 @@ function ProcessFolder($folder)
                                 }
                             }
                         }
-
+                    create_previews($r, false, $extension, false, false, -1, false, $staticsync_ingest);
                     # update access level
                     sql_query("UPDATE resource SET access = '$accessval',archive='$staticsync_defaultstate' WHERE ref = '$r'");
 
@@ -457,10 +470,9 @@ function ProcessFolder($folder)
 
                         # Store original filename in field, if set
                         global $filename_field;
-                        if (isset($filename_field))
-                            {
+                        if (isset($filename_field)) {
                             update_field($rref,$filename_field,$file);  
-                            }
+                        }
 
                         create_previews($rref, false, $rd["file_extension"], false, false, -1, false, $staticsync_ingest);
                         sql_query("UPDATE resource SET file_modified=NOW() WHERE ref='$rref'");
@@ -473,8 +485,16 @@ function ProcessFolder($folder)
 
 # Recurse through the folder structure.
 ProcessFolder($syncdir);
-
+$last_sync = sql_query("select name from sysvars where name = 'last_sync'");
+if (empty($last_sync)) {
+    sql_query("insert into sysvars(name,value) values('last_sync', (select creation_date from resource order by ref desc limit 1))");
+}
+else
+{
+    sql_query("update sysvars set value = (select creation_date from resource order by ref desc limit 1) where name = 'last_sync'");
+}
 echo "...done." . PHP_EOL;
+
 
 if (!$staticsync_ingest)
     {
