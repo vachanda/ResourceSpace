@@ -144,6 +144,7 @@ if (getval("previewsize","")!=""){
         $use_watermark=check_use_watermark();
         $filepath=get_resource_path($results[$n]['ref'],true,getval('previewsize',''),false,'jpg',-1,1,$use_watermark,'',-1);
         $previewpath=get_resource_path($results[$n]['ref'],false,getval("previewsize",""),false,"jpg",-1,1,$use_watermark,"",-1);
+
         if (file_exists($filepath)){
             $results[$n]['preview']=$previewpath;
         }
@@ -161,7 +162,7 @@ if($original) {
         $access = get_resource_access($results[$i]);
         $filepath = get_resource_path($results[$i]['ref'], TRUE, '', FALSE, $results[$i]['file_extension'], -1, 1, FALSE, '', -1);
         $original_link = get_resource_path($results[$i]['ref'], FALSE, '', FALSE, $results[$i]['file_extension'], -1, 1, FALSE, '', -1);
-
+        $results[$i]['file_path'] = $filepath;
         if(file_exists($filepath)) {
             $results[$i]['original_link'] = $original_link;
         } else {
@@ -227,13 +228,11 @@ if($metadata) {
     if(trim($api_search_full_field_data) == '') {
         exit($lang['api_search_error_no_fields_set']);
     }
-
     // Build api_search field string in order to find the fields:
     $fields = sql_query('SELECT ref, title FROM resource_type_field WHERE ref IN (' . $api_search_full_field_data . ');');
     foreach ($fields as $field) {
         $full_fields_options['field' . $field['ref']] = $field['title'];
     }
-        
     for($i = 0; $i < count($results); $i++) {
     
         $full_field_data_ids_list = '';
@@ -245,7 +244,7 @@ if($metadata) {
             if((!$prettyfieldnames && array_key_exists($field_key, $results[$i])) || ($prettyfieldnames && array_key_exists($field_title, $results[$i]))) {
                 $full_field_data_ids_list .= substr($field_key, 5) . ',';
             }
-
+            $full_field_data_ids_list .= substr($field_key, 5) . ',';
         }
         $full_field_data_ids_list = substr($full_field_data_ids_list, 0, -1);
 
@@ -265,16 +264,18 @@ if($metadata) {
             $full_field_data_ids_list,
             $full_field_data_ids_list
         );
+
+        
         $metadata_values = sql_query($query, '');
             
         // Replace the values:
         foreach ($metadata_values as $metadata_field) {
             
-            if(!$prettyfieldnames && array_key_exists('field' . $metadata_field['resource_type_field'], $full_fields_options) && array_key_exists('field' . $metadata_field['resource_type_field'], $results[$i])) {
+            if(!$prettyfieldnames && array_key_exists('field' . $metadata_field['resource_type_field'], $full_fields_options) || array_key_exists('field' . $metadata_field['resource_type_field'], $results[$i])) {
                 $results[$i]['field' . $metadata_field['resource_type_field']] = $metadata_field['value'];
             }
 
-            if($prettyfieldnames && array_key_exists('field' . $metadata_field['resource_type_field'], $full_fields_options) && array_key_exists($full_fields_options['field' . $metadata_field['resource_type_field']], $results[$i])) {
+            if($prettyfieldnames && array_key_exists('field' . $metadata_field['resource_type_field'], $full_fields_options) || array_key_exists($full_fields_options['field' . $metadata_field['resource_type_field']], $results[$i])) {
                 $results[$i][$full_fields_options['field' . $metadata_field['resource_type_field']]] = $metadata_field['value'];
             }
 
