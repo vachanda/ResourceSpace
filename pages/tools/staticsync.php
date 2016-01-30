@@ -157,13 +157,18 @@ function ProcessFolder($folder)
             //No extension
             $extension="";
             }
-       
+
+        if(strpos($fullpath, $nogo)) {
+            echo "This directory is to be ignored." . PHP_EOL;
+            continue;
+        }
+
         if ($staticsync_mapped_category_tree)
             {
             $path_parts = explode("/", $shortpath);
             array_pop($path_parts);
             touch_category_tree_level($path_parts);
-            }   
+            }
 
         # -----FOLDERS-------------
         if ((($filetype == "dir") || $filetype == "link") && 
@@ -381,7 +386,7 @@ function ProcessFolder($folder)
 											}
 										}
                                         
-                                        update_field ($r, $field, $value);
+                                        update_field ($r, $field, trim($value));
                                         
                                         if($staticsync_extension_mapping_append_values){
 											$value=$given_value;
