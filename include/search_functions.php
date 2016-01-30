@@ -156,7 +156,6 @@ function do_search($search,$restypes="",$order_by="relevance",$archive=0,$fetchr
     global $config_search_for_number, $category_tree_search_use_and;
     if ($config_search_for_number && is_numeric($search)) {$keysearch=false;}
     
-    
     # Fetch a list of fields that are not available to the user - these must be omitted from the search.
     $hidden_indexed_fields=get_hidden_indexed_fields();
 
@@ -195,7 +194,7 @@ function do_search($search,$restypes="",$order_by="relevance",$archive=0,$fetchr
                         $datefieldinfo=sql_query("select ref from resource_type_field where name='" . escape_check($kw[0]) . "' and type IN (4,6,10)",0);
                         $datefieldinfo_cache[$kw[0]]=$datefieldinfo;
                         }
-
+                    $kw[0] = str_replace(' ', '_', $kw[0]);
                     if (count($datefieldinfo) && substr($kw[1],0,5)!="range")
                         {
                         $c++;
