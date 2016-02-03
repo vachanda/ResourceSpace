@@ -123,7 +123,7 @@ function touch_category_tree_level($path_parts)
         }
     }
 
-function ProcessFolder($folder)
+function ProcessFolder($folder,$version_dir)
     {
     global $lang, $syncdir, $nogo, $staticsync_max_files, $count, $done, $modtimes, $lastsync, $ffmpeg_preview_extension, 
            $staticsync_autotheme, $staticsync_folder_structure, $staticsync_extension_mapping_default, 
@@ -175,14 +175,19 @@ function ProcessFolder($folder)
             (strpos($nogo, "[$file]") === false) && 
             (strpos($file, $staticsync_alternatives_suffix) === false))
             {
+            # Get current version direcotries.
+            if (preg_match("/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/", $file)) {
+                if(!in_array($file, $version_dir)) {
+                    array_push($version_dir, $file);
+                }
+            }
             # Recurse
-            ProcessFolder($folder . "/" . $file);
+            ProcessFolder($folder . "/" . $file,$version_dir);
             }
 
         # -------FILES---------------
         if (($filetype == "file") && (substr($file,0,1) != ".") && (strtolower($file) != "thumbs.db"))
             {
-
             /* Below Code Adapted  from CMay's bug report */
             global $banned_extensions;
             # Check to see if extension is banned, do not add if it is banned
@@ -282,10 +287,16 @@ function ProcessFolder($folder)
                                                 resource_type_field = (SELECT ref FROM resource_type_field where name = 'original_filepath')");
                 if (isset($original_filepath)) {
                     sql_query("INSERT INTO resource_data (resource,resource_type_field,value) 
-                                VALUES ('$r', (SELECT ref FROM resource_type_field WHERE name = 'original_filepath'), '$fullpath')");
+                                VALUES ('$r',(SELECT ref FROM resource_type_field WHERE name = 'original_filepath'), '$fullpath')");
                 }
                 if ($r !== false)
                     {
+                    # Create current version for resource.
+                    #print_r($version_dir);
+                    if(count($version_dir) == 1) {
+                        sql_query("INSERT into resource_data (resource,resource_type_field,value)
+                                    VALUES ('$r',(SELECT ref FROM resource_type_field WHERE name = 'current'), 'TRUE')");
+                    }
                     # Add to mapped category tree (if configured)
                     if (isset($staticsync_mapped_category_tree))
                         {
@@ -489,7 +500,8 @@ function ProcessFolder($folder)
     }
 
 # Recurse through the folder structure.
-ProcessFolder($syncdir);
+$version_dir = array();
+ProcessFolder($syncdir, $version_dir);
 $last_sync = sql_query("select name from sysvars where name = 'last_sync'");
 if (empty($last_sync)) {
     sql_query("insert into sysvars(name,value) values('last_sync', (select creation_date from resource order by ref desc limit 1))");
