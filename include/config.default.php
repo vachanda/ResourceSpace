@@ -569,7 +569,7 @@ $show_theme_collection_stats=false; # Show count of themes and resources in them
 
 # How many levels of theme category to show.
 # If this is set to more than one, a dropdown box will appear to allow browsing of theme sub-levels
-$theme_category_levels=7;
+$theme_category_levels=10;
 
 # Theme direct jump mode
 # If set, sub category levels DO NOT appear and must be directly linked to using custom home panels or top navigation items (or similar).
@@ -1861,7 +1861,7 @@ $paypal_url="https://www.paypal.com/cgi-bin/webscr";
 # StaticSync (staticsync.php)
 # The ability to synchronise ResourceSpace with a separate and stand-alone filestore.
 # ------------------------------------------------------------------------------------------------------------------
-$syncdir="/Users/hansika/resourcespace"; # The sync folder
+$syncdir="/vol/ume01/resourcespace"; # The sync folder
 $nogo="resized"; # A list of folders to ignore within the sign folder.
 # Maximum number of files to process per execution of staticsync.php
 $staticsync_max_files = 10000;
@@ -1875,7 +1875,7 @@ $staticsync_extension_mapping_default=1;
 $staticsync_extension_mapping[3]=array("mov","3gp","avi","mpg","mp4","flv"); # Video
 $staticsync_extension_mapping[4]=array("flv");
 # Uncomment and set the next line to specify a category tree field to use to store the retieved path information for each file. The tree structure will be automatically modified as necessary to match the folder strucutre within the sync folder (performance penalty).
-$staticsync_mapped_category_tree=73;
+#$staticsync_mapped_category_tree=73;
 # Uncomment and set the next line to specify a text field to store the retrieved path information for each file. This is a time saving alternative to the option above.
 # $staticsync_filepath_to_field=100;
 # Append multiple mapped values instead of overwritting? This will use the same appending methods used when editing fields. Not used on dropdown, date, categroy tree, datetime, or radio buttons
@@ -1898,80 +1898,86 @@ $staticsync_defaultstate=0;
 $staticsync_mapfolders[0]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>75,
+		"field"=>74,
 		"level"=>1
 		);
 $staticsync_mapfolders[1]=array
 		(
 		"match"=>"/SecondSales/",
-		"field"=>75,
+		"field"=>74,
 		"level"=>1
 		);
 $staticsync_mapfolders[2]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>76,
+		"field"=>82,
 		"level"=>2
 		);
 $staticsync_mapfolders[3]=array
 		(
 		"match"=>"/SecondSales/",
-		"field"=>76,
+		"field"=>82,
 		"level"=>2
 		);
 $staticsync_mapfolders[4]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>77,
+		"field"=>73,
 		"level"=>3
 		);
 $staticsync_mapfolders[5]=array
 		(
 		"match"=>"/SecondSales/",
-		"field"=>77,
+		"field"=>73,
 		"level"=>3
 		);
 $staticsync_mapfolders[6]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>79,
+		"field"=>77,
 		"level"=>4
 		);
 $staticsync_mapfolders[7]=array
 		(
 		"match"=>"/SecondSales/",
-		"field"=>78,
+		"field"=>75,
 		"level"=>4
 		);
 $staticsync_mapfolders[8]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>80,
+		"field"=>81,
 		"level"=>5
 		);
 $staticsync_mapfolders[9]=array
 		(
 		"match"=>"/SecondSales/",
-		"field"=>79,
+		"field"=>76,
 		"level"=>5
 		);
 $staticsync_mapfolders[10]=array
 		(
-		"match"=>"/Catalog/",
-		"field"=>81,
+		"match"=>"/SecondSales/",
+		"field"=>77,
 		"level"=>6
 		);
 $staticsync_mapfolders[11]=array
 		(
 		"match"=>"/SecondSales/",
-		"field"=>80,
-		"level"=>6
+		"field"=>78,
+		"level"=>7
 		);
 $staticsync_mapfolders[12]=array
 		(
 		"match"=>"/SecondSales/",
+		"field"=>79,
+		"level"=>8
+		);
+$staticsync_mapfolders[13]=array
+		(
+		"match"=>"/SecondSales/",
 		"field"=>81,
-		"level"=>7
+		"level"=>9
 		);
 
 # StaticSync Path to metadata mapping
@@ -2897,3 +2903,4 @@ $soundex_suggest_limit=10;
 # Option for custom access to override search filters.
 # For this resource, if custom access has been granted for the user or group, nullify the filter for this particular 
 $custom_access_overrides_search_filter=false;
+
