@@ -62,7 +62,6 @@ $test_query=rtrim($test_query,"&");
 if ($collection!=""){$searchadd="!collection".$collection.", ";} else {$searchadd="";}
 
 $results=do_search($searchadd.$search,$restypes,$order_by,$archive,-1,$sort,false,$starsearch);
-file_put_contents("/Users/hansika/search_api_result_65.txt", print_r($results,true));
 if(!is_array($results)) {
     $results=array();
 }
@@ -232,7 +231,6 @@ if($metadata) {
     }
     // Build api_search field string in order to find the fields:
     $fields = sql_query('SELECT ref, title FROM resource_type_field WHERE ref IN (' . $api_search_full_field_data . ');');
-    file_put_contents("/Users/hansika/search_api_result_222.txt", print_r($api_search_full_field_data,true));
     foreach ($fields as $field) {
         $full_fields_options['field' . $field['ref']] = $field['title'];
     }
