@@ -285,38 +285,50 @@ if($metadata) {
 
         }
 
-    #Restructure the Results JSON.
-    $im_identify_path = get_utility_path('im-identify');
-    $get_height_cmd = $im_identify_path . " -format '%[fx:h]' ";
-    $get_width_cmd = $im_identify_path . " -format '%[fx:w]' ";
+        $results[$i] = array_change_key_case($results[$i], CASE_LOWER);
 
-    $sizes = array();
+        #Display only current version of images.
+        if(!isset($results[$i]['current'])) {
+            unset($results[$i]);
+            continue;
+            }
 
-    foreach ($image_alternatives[trim($results[$i]['image_classification'])] as $index => $value) {
-        $path_array = explode('/', $results[$i]['original_filepath']);
-        array_pop($path_array);
-        array_pop($path_array);
-        $alt_path = implode('/', $path_array) . '/resized/' . $results[$i]['Title'] . '_' . $value['filename'] .'.' . $results[$i]['file_extension'] ;
-        $alt_height_cmd = $get_height_cmd . $alt_path;
-        $alt_width_cmd = $get_width_cmd . $alt_path;
-        $sizes[$value['name']]['file_path'] = $alt_path;
-        $sizes[$value['name']]['size'] = array('height' => shell_exec($alt_height_cmd), 'width' => shell_exec($alt_width_cmd));
-    }
+        #Restructure the Results JSON.
+        $im_identify_path = get_utility_path('im-identify');
+        $get_height_cmd = $im_identify_path . " -format '%[fx:h]' ";
+        $get_width_cmd = $im_identify_path . " -format '%[fx:w]' ";
 
-    $get_height_cmd .= $results[$i]['original_filepath'];
-    $get_width_cmd .= $results[$i]['original_filepath'];
+        $sizes = array();
 
-    $sizes['original']['file_path']  = $results[$i]['original_filepath'];
+        $image_classification = $results[$i]['image_classification'];
+        #if (!isset($image_classification)) {
+        #    $image_classification = $results[$i]['Image_Classification'];
+        #}
 
-    $sizes['original']['size'] = array('height' => shell_exec($get_height_cmd), 'width' => shell_exec($get_width_cmd));
+        foreach ($image_alternatives[trim($image_classification)] as $index => $value) {
+            $path_array = explode('/', $results[$i]['original_filepath']);
+            array_pop($path_array);
+            array_pop($path_array);
+            $alt_path = implode('/', $path_array) . '/resized/' . $results[$i]['title'] . '_' . $value['filename'] .'.' . $results[$i]['file_extension'] ;
+            $alt_height_cmd = $get_height_cmd . $alt_path;
+            $alt_width_cmd = $get_width_cmd . $alt_path;
+            $sizes[$value['name']]['file_path'] = $alt_path;
+            $sizes[$value['name']]['size'] = array('height' => shell_exec($alt_height_cmd), 'width' => shell_exec($alt_width_cmd));
+        }
 
-    $results[$i]['sizes'] = $sizes;
+        $get_height_cmd .= $results[$i]['original_filepath'];
+        $get_width_cmd .= $results[$i]['original_filepath'];
 
-    unset($results[$i]['original_filepath']);
-    ksort($results[$i]);
+        $sizes['original']['file_path']  = $results[$i]['original_filepath'];
+
+        $sizes['original']['size'] = array('height' => shell_exec($get_height_cmd), 'width' => shell_exec($get_width_cmd));
+
+        $results[$i]['sizes'] = $sizes;
+
+        unset($results[$i]['original_filepath']);
+        ksort($results[$i]);
     }
 }
-
 
 if (getval("content","")=="xml" && !$paginate){
     header('Content-type: application/xml');
