@@ -191,7 +191,7 @@ function ProcessFolder($folder)
             
             $count++;
             if ($count > $staticsync_max_files) { return(true); }
-            date_default_timezone_set('Asia/Calcutta');
+
             $last_sync_date = sql_value("select value from sysvars where name = 'last_sync'", "");
             $file_creation_date = date("Y-m-d H:i:s" , filectime($fullpath));
             if ((isset($last_sync_date)) && $last_sync_date > $file_creation_date)
