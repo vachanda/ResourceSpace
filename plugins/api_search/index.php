@@ -291,6 +291,10 @@ if($metadata) {
             continue;
             }
 
+
+        if (!isset($results[$i]['aspect_ratio'])) {
+          continue;
+        }
         #Restructure the Results JSON.
         $im_identify_path = get_utility_path('im-identify');
         $get_height_cmd = $im_identify_path . " -format '%[fx:h]' ";
@@ -298,7 +302,7 @@ if($metadata) {
 
         $sizes = array();
 
-        $image_classification = $results[$i]['image_classification'];
+        $image_classification = $results[$i]['aspect_ratio'];
         #if (!isset($image_classification)) {
         #    $image_classification = $results[$i]['Image_Classification'];
         #}
@@ -307,7 +311,7 @@ if($metadata) {
             $path_array = explode('/', $results[$i]['original_filepath']);
             array_pop($path_array);
             array_pop($path_array);
-            $alt_path = implode('/', $path_array) . '/resized/' . $results[$i]['title'] . '_' . $value['filename'] .'.' . $results[$i]['file_extension'] ;
+            $alt_path = implode('/', $path_array) . '/resized/' . $value['filename'] . '/' . $results[$i]['title'] . '_' . $value['filename'] .'.' . $results[$i]['file_extension'] ;
             $alt_height_cmd = $get_height_cmd . $alt_path;
             $alt_width_cmd = $get_width_cmd . $alt_path;
             $sizes[$value['name']]['file_path'] = $alt_path;
@@ -390,7 +394,3 @@ else {
     }
     echo json_encode($results); // echo json without headers by default
 } 
-
-
-
-

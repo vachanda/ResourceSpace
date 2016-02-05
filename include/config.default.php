@@ -569,7 +569,7 @@ $show_theme_collection_stats=false; # Show count of themes and resources in them
 
 # How many levels of theme category to show.
 # If this is set to more than one, a dropdown box will appear to allow browsing of theme sub-levels
-$theme_category_levels=10;
+$theme_category_levels=11;
 
 # Theme direct jump mode
 # If set, sub category levels DO NOT appear and must be directly linked to using custom home panels or top navigation items (or similar).
@@ -1742,34 +1742,48 @@ $request_adds_to_collection=false;
 # The blocks must be numbered sequentially (0, 1, 2).
 # 'params' are any extra parameters to pass to ImageMagick for example DPI
 # 'source_extensions' is a comma-separated list of the files that will be processed, e.g. "eps,png,gif" (note no spaces).
-$image_alternatives["Catalog"][0]["name"]="Thumbnail";
-$image_alternatives["Catalog"][0]["source_extensions"]="eps,png,gif,jpg";
-$image_alternatives["Catalog"][0]["filename"]="thumbnail";
-$image_alternatives["Catalog"][0]["target_extension"]="";
-$image_alternatives["Catalog"][0]["params"]="-resize 65X35"; # 300 dpi
-$image_alternatives["Catalog"][0]["icc"]=false;
+$resize_folders="images";
+$image_alternatives["1_1"][0]["name"]="200x400";
+$image_alternatives["1_1"][0]["source_extensions"]="eps,png,gif,jpg";
+$image_alternatives["1_1"][0]["filename"]="200x400";
+$image_alternatives["1_1"][0]["target_extension"]="";
+$image_alternatives["1_1"][0]["params"]="-resize 200x400";
+$image_alternatives["1_1"][0]["icc"]=false;
 
-$image_alternatives["Catalog"][1]["name"]="SlideShow";
-$image_alternatives["Catalog"][1]["source_extensions"]="eps,png,gif,jpg";
-$image_alternatives["Catalog"][1]["filename"]="slideshow";
-$image_alternatives["Catalog"][1]["target_extension"]="";
-$image_alternatives["Catalog"][1]["params"]="-resize 610X330"; # 300 dpi
-$image_alternatives["Catalog"][1]["icc"]=false;
+$image_alternatives["1_1"][1]["name"]="720x400";
+$image_alternatives["1_1"][1]["source_extensions"]="eps,png,gif,jpg";
+$image_alternatives["1_1"][1]["filename"]="720x400";
+$image_alternatives["1_1"][1]["target_extension"]="";
+$image_alternatives["1_1"][1]["params"]="-resize 720x400";
+$image_alternatives["1_1"][1]["icc"]=false;
 
-$image_alternatives["SecondSales"][0]["name"]="Thumbnail";
-$image_alternatives["SecondSales"][0]["source_extensions"]="eps,png,gif,jpg";
-$image_alternatives["SecondSales"][0]["filename"]="thumbnail";
-$image_alternatives["SecondSales"][0]["target_extension"]="";
-$image_alternatives["SecondSales"][0]["params"]="-resize 65X35"; # 300 dpi
-$image_alternatives["SecondSales"][0]["icc"]=false;
+$image_alternatives["4_3"][0]["name"]="200x400";
+$image_alternatives["4_3"][0]["source_extensions"]="eps,png,gif,jpg";
+$image_alternatives["4_3"][0]["filename"]="200x400";
+$image_alternatives["4_3"][0]["target_extension"]="";
+$image_alternatives["4_3"][0]["params"]="-resize 200x400";
+$image_alternatives["4_3"][0]["icc"]=false;
 
-$image_alternatives["SecondSales"][1]["name"]="SlideShow";
-$image_alternatives["SecondSales"][1]["source_extensions"]="eps,png,gif,jpg";
-$image_alternatives["SecondSales"][1]["filename"]="slideshow";
-$image_alternatives["SecondSales"][1]["target_extension"]="";
-$image_alternatives["SecondSales"][1]["params"]="-resize 610X330"; # 300 dpi
-$image_alternatives["SecondSales"][1]["icc"]=false;
+$image_alternatives["4_3"][1]["name"]="720x400";
+$image_alternatives["4_3"][1]["source_extensions"]="eps,png,gif,jpg";
+$image_alternatives["4_3"][1]["filename"]="720x400";
+$image_alternatives["4_3"][1]["target_extension"]="";
+$image_alternatives["4_3"][1]["params"]="-resize 720x400";
+$image_alternatives["4_3"][1]["icc"]=false;
 
+$image_alternatives["16_9"][0]["name"]="200x400";
+$image_alternatives["16_9"][0]["source_extensions"]="eps,png,gif,jpg";
+$image_alternatives["16_9"][0]["filename"]="200x400";
+$image_alternatives["16_9"][0]["target_extension"]="";
+$image_alternatives["16_9"][0]["params"]="-resize 200x400";
+$image_alternatives["16_9"][0]["icc"]=false;
+
+$image_alternatives["16_9"][0]["name"]="720x400";
+$image_alternatives["16_9"][0]["source_extensions"]="eps,png,gif,jpg";
+$image_alternatives["16_9"][0]["filename"]="720x400";
+$image_alternatives["16_9"][0]["target_extension"]="";
+$image_alternatives["16_9"][0]["params"]="-resize 720x400";
+$image_alternatives["16_9"][0]["icc"]=false;
 # Example - automatically create a PNG file alternative when an EPS file is uploaded.
 # $image_alternatives[0]["name"]="PNG File";
 # $image_alternatives[0]["source_extensions"]="eps";
@@ -1856,7 +1870,7 @@ $paypal_url="https://www.paypal.com/cgi-bin/webscr";
 # Ability to set a field which will store 'Portrait' or 'Landscape' depending on image dimensions
 # $portrait_landscape_field=1;
 
-
+$error_email_list = "vachan.da@urbanladder.com,ganesh.hegde@urbanladder.com";
 # ------------------------------------------------------------------------------------------------------------------
 # StaticSync (staticsync.php)
 # The ability to synchronise ResourceSpace with a separate and stand-alone filestore.
@@ -1898,37 +1912,37 @@ $staticsync_defaultstate=0;
 $staticsync_mapfolders[0]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>74,
+		"field"=>75,
 		"level"=>1
 		);
 $staticsync_mapfolders[1]=array
 		(
-		"match"=>"/SecondSales/",
-		"field"=>74,
+		"match"=>"/second_sales/",
+		"field"=>75,
 		"level"=>1
 		);
 $staticsync_mapfolders[2]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>82,
+		"field"=>74,
 		"level"=>2
 		);
 $staticsync_mapfolders[3]=array
 		(
-		"match"=>"/SecondSales/",
-		"field"=>82,
+		"match"=>"/second_sales/",
+		"field"=>74,
 		"level"=>2
 		);
 $staticsync_mapfolders[4]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>73,
+		"field"=>76,
 		"level"=>3
 		);
 $staticsync_mapfolders[5]=array
 		(
-		"match"=>"/SecondSales/",
-		"field"=>73,
+		"match"=>"/second_sales/",
+		"field"=>76,
 		"level"=>3
 		);
 $staticsync_mapfolders[6]=array
@@ -1939,8 +1953,8 @@ $staticsync_mapfolders[6]=array
 		);
 $staticsync_mapfolders[7]=array
 		(
-		"match"=>"/SecondSales/",
-		"field"=>75,
+		"match"=>"/second_sales/",
+		"field"=>80,
 		"level"=>4
 		);
 $staticsync_mapfolders[8]=array
@@ -1951,35 +1965,40 @@ $staticsync_mapfolders[8]=array
 		);
 $staticsync_mapfolders[9]=array
 		(
-		"match"=>"/SecondSales/",
-		"field"=>76,
+		"match"=>"/second_sales/",
+		"field"=>77,
 		"level"=>5
 		);
 $staticsync_mapfolders[10]=array
 		(
-		"match"=>"/SecondSales/",
-		"field"=>77,
+		"match"=>"/second_sales/",
+		"field"=>78,
 		"level"=>6
 		);
 $staticsync_mapfolders[11]=array
 		(
-		"match"=>"/SecondSales/",
-		"field"=>78,
+		"match"=>"/second_sales/",
+		"field"=>79,
 		"level"=>7
 		);
 $staticsync_mapfolders[12]=array
 		(
-		"match"=>"/SecondSales/",
-		"field"=>79,
+		"match"=>"/second_sales/",
+		"field"=>81,
 		"level"=>8
 		);
 $staticsync_mapfolders[13]=array
 		(
-		"match"=>"/SecondSales/",
-		"field"=>81,
+		"match"=>"/second_sales/",
+		"field"=>82,
 		"level"=>9
 		);
-
+$staticsync_mapfolders[14]=array
+		(
+		"match"=>"/second_sales/",
+		"field"=>83,
+		"level"=>10
+		);
 # StaticSync Path to metadata mapping
 # ------------------------
 # It is possible to take path information and map selected parts of the path to metadata fields.

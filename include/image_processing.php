@@ -989,7 +989,7 @@ function create_previews($ref,$thumbonly=false,$extension="jpg",$previewonly=fal
                 $path_array = explode('/', $actual_image_path);
                 array_pop($path_array);
                 array_pop($path_array);
-                $resized_image_path = implode("/", $path_array) . '/resized/';
+                $resized_image_path = implode("/", $path_array) . '/resized/' . $resize_value['filename'] . '/';
 
                 if (!file_exists($resized_image_path)) {
                 	mkdir($resized_image_path, 0777, true);
