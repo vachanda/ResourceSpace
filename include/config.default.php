@@ -1363,7 +1363,8 @@ $default_home_page="home.php";
 # Configures separators to use when splitting keywords (in other words - characters to treat as white space)
 # You must reindex after altering this if you have existing data in the system (via pages/tools/reindex.php)
 # 'Space' is included by default and does not need to be specified below.
-$config_separators=array("/","_",".","; ","-","(",")","'","\"","\\", "?");
+#$config_separators=array("/","_",".","; ","-","(",")","'","\"","\\", "?");
+$config_separators=array("/",".","; ","(",")","'","\"","\\", "?");
 
 # trim characters - will be removed from the beginning or end of the string, but not the middle
 # when indexing. Format for this argument is as described in PHP trim() documentation.
@@ -1743,46 +1744,46 @@ $request_adds_to_collection=false;
 # 'params' are any extra parameters to pass to ImageMagick for example DPI
 # 'source_extensions' is a comma-separated list of the files that will be processed, e.g. "eps,png,gif" (note no spaces).
 $resize_folders="images";
-$image_alternatives["1_1"][0]["name"]="200x400";
+$image_alternatives["1_1"][0]["name"]="400x400";
 $image_alternatives["1_1"][0]["source_extensions"]="eps,png,gif,jpg";
-$image_alternatives["1_1"][0]["filename"]="200x400";
+$image_alternatives["1_1"][0]["filename"]="400x400";
 $image_alternatives["1_1"][0]["target_extension"]="";
-$image_alternatives["1_1"][0]["params"]="-resize 200x400";
+$image_alternatives["1_1"][0]["params"]="-resize 400x400";
 $image_alternatives["1_1"][0]["icc"]=false;
 
-$image_alternatives["1_1"][1]["name"]="720x400";
+$image_alternatives["1_1"][1]["name"]="720x720";
 $image_alternatives["1_1"][1]["source_extensions"]="eps,png,gif,jpg";
-$image_alternatives["1_1"][1]["filename"]="720x400";
+$image_alternatives["1_1"][1]["filename"]="720x720";
 $image_alternatives["1_1"][1]["target_extension"]="";
-$image_alternatives["1_1"][1]["params"]="-resize 720x400";
+$image_alternatives["1_1"][1]["params"]="-resize 720x720";
 $image_alternatives["1_1"][1]["icc"]=false;
 
-$image_alternatives["4_3"][0]["name"]="200x400";
+$image_alternatives["4_3"][0]["name"]="400x300";
 $image_alternatives["4_3"][0]["source_extensions"]="eps,png,gif,jpg";
-$image_alternatives["4_3"][0]["filename"]="200x400";
+$image_alternatives["4_3"][0]["filename"]="400x300";
 $image_alternatives["4_3"][0]["target_extension"]="";
-$image_alternatives["4_3"][0]["params"]="-resize 200x400";
+$image_alternatives["4_3"][0]["params"]="-resize 400x300";
 $image_alternatives["4_3"][0]["icc"]=false;
 
-$image_alternatives["4_3"][1]["name"]="720x400";
+$image_alternatives["4_3"][1]["name"]="1600x1200";
 $image_alternatives["4_3"][1]["source_extensions"]="eps,png,gif,jpg";
-$image_alternatives["4_3"][1]["filename"]="720x400";
+$image_alternatives["4_3"][1]["filename"]="1600x1200";
 $image_alternatives["4_3"][1]["target_extension"]="";
-$image_alternatives["4_3"][1]["params"]="-resize 720x400";
+$image_alternatives["4_3"][1]["params"]="-resize 1600x1200";
 $image_alternatives["4_3"][1]["icc"]=false;
 
-$image_alternatives["16_9"][0]["name"]="200x400";
+$image_alternatives["16_9"][0]["name"]="800x450";
 $image_alternatives["16_9"][0]["source_extensions"]="eps,png,gif,jpg";
-$image_alternatives["16_9"][0]["filename"]="200x400";
+$image_alternatives["16_9"][0]["filename"]="800x450";
 $image_alternatives["16_9"][0]["target_extension"]="";
-$image_alternatives["16_9"][0]["params"]="-resize 200x400";
+$image_alternatives["16_9"][0]["params"]="-resize 800x450";
 $image_alternatives["16_9"][0]["icc"]=false;
 
-$image_alternatives["16_9"][0]["name"]="720x400";
+$image_alternatives["16_9"][0]["name"]="1600x900";
 $image_alternatives["16_9"][0]["source_extensions"]="eps,png,gif,jpg";
-$image_alternatives["16_9"][0]["filename"]="720x400";
+$image_alternatives["16_9"][0]["filename"]="1600x900";
 $image_alternatives["16_9"][0]["target_extension"]="";
-$image_alternatives["16_9"][0]["params"]="-resize 720x400";
+$image_alternatives["16_9"][0]["params"]="-resize 1600x900";
 $image_alternatives["16_9"][0]["icc"]=false;
 # Example - automatically create a PNG file alternative when an EPS file is uploaded.
 # $image_alternatives[0]["name"]="PNG File";
@@ -1878,6 +1879,7 @@ $error_email_list = "vachan.da@urbanladder.com,ganesh.hegde@urbanladder.com";
 $syncdir="/vol/ume01/resourcespace"; # The sync folder
 $nogo="resized"; # A list of folders to ignore within the sign folder.
 # Maximum number of files to process per execution of staticsync.php
+$exclude_resize = "raw,psd";
 $staticsync_max_files = 10000;
 $staticsync_autotheme=true; # Automatically create themes based on the first and second levels of the sync folder structure.
 # Allow unlimited theme levels to be created based on the folder structure. 
@@ -1912,67 +1914,67 @@ $staticsync_defaultstate=0;
 $staticsync_mapfolders[0]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>75,
+		"field"=>74,
 		"level"=>1
 		);
 $staticsync_mapfolders[1]=array
 		(
 		"match"=>"/second_sales/",
-		"field"=>75,
+		"field"=>74,
 		"level"=>1
 		);
 $staticsync_mapfolders[2]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>74,
+		"field"=>73,
 		"level"=>2
 		);
 $staticsync_mapfolders[3]=array
 		(
 		"match"=>"/second_sales/",
-		"field"=>74,
+		"field"=>73,
 		"level"=>2
 		);
 $staticsync_mapfolders[4]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>76,
+		"field"=>75,
 		"level"=>3
 		);
 $staticsync_mapfolders[5]=array
 		(
 		"match"=>"/second_sales/",
-		"field"=>76,
+		"field"=>75,
 		"level"=>3
 		);
 $staticsync_mapfolders[6]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>77,
+		"field"=>76,
 		"level"=>4
 		);
 $staticsync_mapfolders[7]=array
 		(
 		"match"=>"/second_sales/",
-		"field"=>80,
+		"field"=>76,
 		"level"=>4
 		);
 $staticsync_mapfolders[8]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>81,
+		"field"=>77,
 		"level"=>5
 		);
 $staticsync_mapfolders[9]=array
 		(
 		"match"=>"/second_sales/",
-		"field"=>77,
+		"field"=>78,
 		"level"=>5
 		);
 $staticsync_mapfolders[10]=array
 		(
 		"match"=>"/second_sales/",
-		"field"=>78,
+		"field"=>77,
 		"level"=>6
 		);
 $staticsync_mapfolders[11]=array
@@ -1984,19 +1986,19 @@ $staticsync_mapfolders[11]=array
 $staticsync_mapfolders[12]=array
 		(
 		"match"=>"/second_sales/",
-		"field"=>81,
+		"field"=>80,
 		"level"=>8
 		);
 $staticsync_mapfolders[13]=array
 		(
 		"match"=>"/second_sales/",
-		"field"=>82,
+		"field"=>81,
 		"level"=>9
 		);
 $staticsync_mapfolders[14]=array
 		(
 		"match"=>"/second_sales/",
-		"field"=>83,
+		"field"=>82,
 		"level"=>10
 		);
 # StaticSync Path to metadata mapping

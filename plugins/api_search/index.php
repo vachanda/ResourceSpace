@@ -33,7 +33,6 @@ echo file_get_contents("readme.txt");
 die();
 }
 
-
 if ($api_search['signed']){
 
 // test signature? get query string minus leading ? and skey parameter
@@ -144,7 +143,6 @@ if (getval("previewsize","")!=""){
         $use_watermark=check_use_watermark();
         $filepath=get_resource_path($results[$n]['ref'],true,getval('previewsize',''),false,'jpg',-1,1,$use_watermark,'',-1);
         $previewpath=get_resource_path($results[$n]['ref'],false,getval("previewsize",""),false,"jpg",-1,1,$use_watermark,"",-1);
-        file_put_contents("/Users/hansika/search_api_filepath.txt", "filepath: $filepath, Preview: $previewpath" );
 
         if (file_exists($filepath)){
             $results[$n]['preview']=$previewpath;
@@ -234,7 +232,6 @@ if($metadata) {
     foreach ($fields as $field) {
         $full_fields_options['field' . $field['ref']] = $field['title'];
     }
-    #file_put_contents("/Users/hansika/search_api_result_222.txt", print_r($full_fields_options,true));
     for($i = 0; $i < count($results); $i++) {
     
         $full_field_data_ids_list = '';
@@ -291,6 +288,10 @@ if($metadata) {
             continue;
             }
 
+        if($results[$i]['image_state'] !== "images") {
+            unset($results[$i]);
+            continue;
+            }
 
         if (!isset($results[$i]['aspect_ratio'])) {
           continue;
@@ -392,5 +393,7 @@ else {
     if ($paginate) {
         $results = array('resources' => $results, 'pagination' => $pagination);
     }
+     
+    $results = array_values($results); 
     echo json_encode($results); // echo json without headers by default
 } 

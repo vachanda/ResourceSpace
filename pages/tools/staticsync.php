@@ -123,13 +123,22 @@ function touch_category_tree_level($path_parts)
         }
     }
 
+function word_in_string($words, $string_array) {
+   $word_array = explode(',', $words);
+   $contains = array_intersect($word_array, $string_array);
+   if(!empty($contains)) {
+      return true;
+   }
+   return false;
+}
+
 function ProcessFolder($folder,$version_dir)
     {
     global $lang, $syncdir, $nogo, $staticsync_max_files, $count, $done, $modtimes, $lastsync, $ffmpeg_preview_extension, 
            $staticsync_autotheme, $staticsync_folder_structure, $staticsync_extension_mapping_default, 
            $staticsync_extension_mapping, $staticsync_mapped_category_tree, $staticsync_title_includes_path, 
            $staticsync_ingest, $staticsync_mapfolders, $staticsync_alternatives_suffix, $theme_category_levels, $staticsync_defaultstate,
-           $additional_archive_states,$staticsync_extension_mapping_append_values, $image_alternatives;
+           $additional_archive_states,$staticsync_extension_mapping_append_values, $image_alternatives, $exclude_resize;
     
     $collection = 0;
     
@@ -176,14 +185,31 @@ function ProcessFolder($folder,$version_dir)
             (strpos($file, $staticsync_alternatives_suffix) === false))
             {
             # Get current version direcotries.
-            if (preg_match("/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/", $file)) {
-                if(!in_array($file, $version_dir)) {
+            if (preg_match("/^[0-9]{2}-[0-9]{2}-[0-9]{4}$/", $file)) {
+              if(!in_array($file, $version_dir)) {
                     array_push($version_dir, $file);
-                }
+              }
+
+              if (preg_match('/processing/', $file)) {
+                   echo "The Barcode is still being processed." . PHP_EOL;
+                   continue;
+                 }
             }
             # Recurse
             ProcessFolder($folder . "/" . $file,$version_dir);
             }
+        
+        $psd_files = array(); 
+        
+        if (preg_match('/images/', $fullpath)) {
+          $path_array = explode('/', $fullpath);
+          $psd_array = array_splice($path_array, 0 , array_search('images', $path_array));
+          $psd_path = implode('/', $psd_array) . '/psd/';
+          $psd_files = array_diff(scandir($psd_path), array('..', '.'));
+          foreach ($psd_files as $index => $psd_file) {
+            $psd_files[$index] = pathinfo($psd_file, PATHINFO_FILENAME); 
+          }
+        }
 
         # -------FILES---------------
         if (($filetype == "file") && (substr($file,0,1) != ".") && (strtolower($file) != "thumbs.db"))
@@ -282,17 +308,39 @@ function ProcessFolder($folder,$version_dir)
 
                 # Import this file
                 #$r = import_resource($shortpath, $type, $title, $staticsync_ingest);
-                $r = import_resource($fullpath, $type, $title, $staticsync_ingest);
-                $original_filepath = sql_query("SELECT value FROM resource_data WHERE resource = '$r' AND 
-                                                resource_type_field = (SELECT ref FROM resource_type_field where name = 'original_filepath')");
-                if (isset($original_filepath)) {
-                    sql_query("INSERT INTO resource_data (resource,resource_type_field,value) 
-                                VALUES ('$r',(SELECT ref FROM resource_type_field WHERE name = 'original_filepath'), '$fullpath')");
+                #Check for file name containing the psd.
+                
+                if(isset($psd_files)) {
+                  $image_file_array = explode('/', $fullpath);
+                  $image_file = $image_file_array[count($image_file_array)-1];
+                  $image_psd_name = explode('_', $image_file)[0];
+                  if(array_search($image_psd_name, $psd_files)) {
+                     #Image name is in right format.
+                     $r = import_resource($fullpath, $type, $title, $staticsync_ingest);
+                    
+                     sql_query("INSERT INTO resource_data (resource,resource_type_field,value)
+                                VALUES ('$r', (SELECT ref FROM resource_type_field WHERE name = 'logical_id'), '$image_psd_name')");
+                     
+                     $original_filepath = sql_query("SELECT value FROM resource_data WHERE resource = '$r' AND 
+                                                     resource_type_field = (SELECT ref FROM resource_type_field where name = 'original_filepath')");
+                     if (isset($original_filepath)) {
+                       sql_query("INSERT INTO resource_data (resource,resource_type_field,value) 
+                                  VALUES ('$r',(SELECT ref FROM resource_type_field WHERE name = 'original_filepath'), '$fullpath')");
+                     }
+                  }
+                  elseif(word_in_string($exclude_resize, explode('/', $fullpath))) {
+                    $r = import_resource($fullpath, $type, $title, $staticsync_ingest);
+                  }
+                  else {
+                    echo "Filename '$fullpath' is not in right format.." . PHP_EOL;
+                    continue;
+                  }
                 }
+
                 if ($r !== false)
                     {
                     # Create current version for resource.
-                    #print_r($version_dir);
+                    print_r($version_dir);
                     if(count($version_dir) == 1) {
                         sql_query("INSERT into resource_data (resource,resource_type_field,value)
                                     VALUES ('$r',(SELECT ref FROM resource_type_field WHERE name = 'current'), 'TRUE')");
@@ -398,7 +446,12 @@ function ProcessFolder($folder,$version_dir)
 										}
                                         
                                         update_field ($r, $field, trim($value));
-                                        
+                                        if(strtotime(trim($value))) {
+                                          add_keyword_mappings($r, trim($value), $field, false, true);
+                                        }
+                                        else {
+                                          add_keyword_mappings($r, trim($value), $field);
+                                        }
                                         if($staticsync_extension_mapping_append_values){
 											$value=$given_value;
 										}
@@ -409,7 +462,12 @@ function ProcessFolder($folder,$version_dir)
                                 }
                             }
                         }
-                    create_previews($r, false, $extension, false, false, -1, false, $staticsync_ingest);
+                    
+                    #Resize only original images.
+                    if (!word_in_string($exclude_resize, explode('/', $fullpath))) {
+                      echo "Creating preview..";
+                      create_previews($r, false, $extension, false, false, -1, false, $staticsync_ingest);
+                    }
                     # update access level
                     sql_query("UPDATE resource SET access = '$accessval',archive='$staticsync_defaultstate' WHERE ref = '$r'");
 
@@ -552,5 +610,3 @@ if (!$staticsync_ingest)
 sql_query("UPDATE sysvars SET value=now() WHERE name='lastsync'");
 
 clear_process_lock("staticsync");
-
-?>
