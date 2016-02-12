@@ -40,10 +40,10 @@ if ($argc == 2)
         {
         exit("Unknown argv: " . $argv[1]);
         }
-    } 
+    }
 
 # Check for a process lock
-if (is_process_lock("staticsync")) 
+if (is_process_lock("staticsync"))
     {
     echo 'Process lock is in place. Deferring.' . PHP_EOL;
     echo 'To clear the lock after a failed run use --clearlock flag.' . PHP_EOL;
@@ -91,8 +91,8 @@ function touch_category_tree_level($path_parts)
         # The node name should contain all the subsequent parts of the path
         if ($n > 0) { $nodename .= "/"; }
         $nodename .= $path_parts[$n];
-        
-        # Look for this node in the tree.       
+
+        # Look for this node in the tree.
         $found = false;
         for ($m=0; $m<count($tree); $m++)
             {
@@ -132,16 +132,68 @@ function word_in_string($words, $string_array) {
    return false;
 }
 
-function ProcessFolder($folder,$version_dir)
+//Make POST calls with data in $fields to the host $host.
+
+function send_sync_status($host, $uri, $protocol="http", $fields=array()) {
+	$curl_path = $protocol . '://' . $host . $uri;
+	$fields_string = "";
+	if(!empty($fields)) {
+		foreach($fields as $key=>$value) {
+			$fields_string .= $key.'='.$value.'&';
+		}
+		rtrim($fields_string, '&');
+	}
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $curl_path);
+	curl_setopt($ch, CURLOPT_POST, count($fields));
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $fields_string);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	$response = curl_exec($ch);
+	$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	return $httpcode;
+}
+
+function validate_image_size($fullpath, $image_height) {
+    $im_identify_path = get_utility_path('im-identify');
+    $get_height_cmd = $im_identify_path . " -format '%[fx:h]' ";
+    $get_width_cmd = $im_identify_path . " -format '%[fx:w]' ";
+
+    $get_height_cmd .= $fullpath;
+    $get_width_cmd .= $fullpath;
+
+    $height = shell_exec($get_height_cmd);
+    $width = shell_exec($get_width_cmd);
+
+    if ($height !== $image_height) {
+        return false;
+    }
+
+    $aspect_ratio_array = explode('/', $fullpath);
+    array_pop($aspect_ratio_array);
+    array_pop($aspect_ratio_array);
+    $aspect_ratio = array_pop($aspect_ratio_array);
+
+    $multiply_values = explode('_', $aspect_ratio);
+    $calculated_width = $height * $multiply_values[1] / $multiply_values[0];
+
+    if ($width !== $calculated_width ) {
+        return false;
+    }
+
+    return true;
+}
+
+function ProcessFolder($folder,$version_dir, &$resource_array, &$resource_error)
     {
-    global $lang, $syncdir, $nogo, $staticsync_max_files, $count, $done, $modtimes, $lastsync, $ffmpeg_preview_extension, 
-           $staticsync_autotheme, $staticsync_folder_structure, $staticsync_extension_mapping_default, 
-           $staticsync_extension_mapping, $staticsync_mapped_category_tree, $staticsync_title_includes_path, 
+    global $lang, $syncdir, $nogo, $staticsync_max_files, $count, $done, $modtimes, $lastsync, $ffmpeg_preview_extension,
+           $staticsync_autotheme, $staticsync_folder_structure, $staticsync_extension_mapping_default,
+           $staticsync_extension_mapping, $staticsync_mapped_category_tree, $staticsync_title_includes_path,
            $staticsync_ingest, $staticsync_mapfolders, $staticsync_alternatives_suffix, $theme_category_levels, $staticsync_defaultstate,
-           $additional_archive_states,$staticsync_extension_mapping_append_values, $image_alternatives, $exclude_resize;
-    
+           $additional_archive_states,$staticsync_extension_mapping_append_values, $image_alternatives, $exclude_resize, $post_host, $media_endpoint,
+           $image_required_height;
+
     $collection = 0;
-    
+
     echo "Processing Folder: $folder" . PHP_EOL;
     #$alt_path = get_resource_path(59, TRUE, '', FALSE, 'png', -1, 1, FALSE, '', 4);
     # List all files in this folder.
@@ -180,8 +232,8 @@ function ProcessFolder($folder,$version_dir)
             }
 
         # -----FOLDERS-------------
-        if ((($filetype == "dir") || $filetype == "link") && 
-            (strpos($nogo, "[$file]") === false) && 
+        if ((($filetype == "dir") || $filetype == "link") &&
+            (strpos($nogo, "[$file]") === false) &&
             (strpos($file, $staticsync_alternatives_suffix) === false))
             {
             # Get current version direcotries.
@@ -196,18 +248,18 @@ function ProcessFolder($folder,$version_dir)
                  }
             }
             # Recurse
-            ProcessFolder($folder . "/" . $file,$version_dir);
+            ProcessFolder($folder . "/" . $file,$version_dir, $resource_array, $resource_error);
             }
-        
-        $psd_files = array(); 
-        
+
+        $psd_files = array();
+
         if (preg_match('/images/', $fullpath)) {
           $path_array = explode('/', $fullpath);
           $psd_array = array_splice($path_array, 0 , array_search('images', $path_array));
           $psd_path = implode('/', $psd_array) . '/psd/';
           $psd_files = array_diff(scandir($psd_path), array('..', '.'));
           foreach ($psd_files as $index => $psd_file) {
-            $psd_files[$index] = pathinfo($psd_file, PATHINFO_FILENAME); 
+            $psd_files[$index] = pathinfo($psd_file, PATHINFO_FILENAME);
           }
         }
 
@@ -219,7 +271,7 @@ function ProcessFolder($folder,$version_dir)
             # Check to see if extension is banned, do not add if it is banned
             if(array_search($extension, $banned_extensions)){continue;}
             /* Above Code Adapted from CMay's bug report */
-            
+
             $count++;
             if ($count > $staticsync_max_files) { return(true); }
 
@@ -234,7 +286,7 @@ function ProcessFolder($folder,$version_dir)
             if (!isset($done[$shortpath]))
                 {
                 echo "Processing file: $fullpath" . PHP_EOL;
-                
+
                 if ($collection == 0 && $staticsync_autotheme)
                     {
                     # Make a new collection for this folder.
@@ -243,7 +295,7 @@ function ProcessFolder($folder,$version_dir)
                     $themesql     = "theme='" . ucwords(escape_check($e[0])) . "'";
                     $themecolumns = "theme";
                     $themevalues  = "'" . ucwords(escape_check($e[0])) . "'";
-                    
+
                     if ($staticsync_folder_structure)
                         {
                         for ($x=0;$x<count($e)-1;$x++)
@@ -256,8 +308,8 @@ function ProcessFolder($folder,$version_dir)
                                     $theme_category_levels = $themeindex;
                                     if ($x == count($e)-2)
                                         {
-                                        echo PHP_EOL . PHP_EOL . 
-                                             "UPDATE THEME_CATEGORY_LEVELS TO $themeindex IN CONFIG!!!!" . 
+                                        echo PHP_EOL . PHP_EOL .
+                                             "UPDATE THEME_CATEGORY_LEVELS TO $themeindex IN CONFIG!!!!" .
                                              PHP_EOL . PHP_EOL;
                                         }
                                     }
@@ -276,7 +328,7 @@ function ProcessFolder($folder,$version_dir)
                     $collection = sql_value("SELECT ref value FROM collection WHERE name='$escaped_name' AND $themesql", 0);
                     if ($collection == 0)
                         {
-                        sql_query("INSERT INTO collection (name,created,public,$themecolumns,allow_changes) 
+                        sql_query("INSERT INTO collection (name,created,public,$themecolumns,allow_changes)
                                                    VALUES ('$escaped_name', NOW(), 1, $themevalues, 0)");
                         $collection = sql_insert_id();
                         }
@@ -309,22 +361,26 @@ function ProcessFolder($folder,$version_dir)
                 # Import this file
                 #$r = import_resource($shortpath, $type, $title, $staticsync_ingest);
                 #Check for file name containing the psd.
-                
+
+
                 if(isset($psd_files)) {
+                  if (!validate_image_size($fullpath, $image_required_height)) {
+                    $resource_error['size'][$file] =  $fullpath;
+                  }
                   $image_file_array = explode('/', $fullpath);
                   $image_file = $image_file_array[count($image_file_array)-1];
                   $image_psd_name = explode('_', $image_file)[0];
                   if(array_search($image_psd_name, $psd_files)) {
                      #Image name is in right format.
                      $r = import_resource($fullpath, $type, $title, $staticsync_ingest);
-                    
+
                      sql_query("INSERT INTO resource_data (resource,resource_type_field,value)
                                 VALUES ('$r', (SELECT ref FROM resource_type_field WHERE name = 'logical_id'), '$image_psd_name')");
-                     
-                     $original_filepath = sql_query("SELECT value FROM resource_data WHERE resource = '$r' AND 
+
+                     $original_filepath = sql_query("SELECT value FROM resource_data WHERE resource = '$r' AND
                                                      resource_type_field = (SELECT ref FROM resource_type_field where name = 'original_filepath')");
                      if (isset($original_filepath)) {
-                       sql_query("INSERT INTO resource_data (resource,resource_type_field,value) 
+                       sql_query("INSERT INTO resource_data (resource,resource_type_field,value)
                                   VALUES ('$r',(SELECT ref FROM resource_type_field WHERE name = 'original_filepath'), '$fullpath')");
                      }
                   }
@@ -333,14 +389,16 @@ function ProcessFolder($folder,$version_dir)
                   }
                   else {
                     echo "Filename '$fullpath' is not in right format.." . PHP_EOL;
+                    $resource_error['name'][$file] =  $fullpath;
                     continue;
                   }
                 }
 
                 if ($r !== false)
                     {
+                    array_push($resource_array, $r);
                     # Create current version for resource.
-                    print_r($version_dir);
+                    #print_r($version_dir);
                     if(count($version_dir) == 1) {
                         sql_query("INSERT into resource_data (resource,resource_type_field,value)
                                     VALUES ('$r',(SELECT ref FROM resource_type_field WHERE name = 'current'), 'TRUE')");
@@ -354,16 +412,16 @@ function ProcessFolder($folder,$version_dir)
                         # For each node level, expand it back to the root so the full path is stored.
                         for ($n=0;$n<count($path_parts);$n++)
                             {
-                            if ($basepath != '') 
-                                { 
+                            if ($basepath != '')
+                                {
                                 $basepath .= "~";
                                 }
                             $basepath .= $path_parts[$n];
                             $path_parts[$n] = $basepath;
                             }
-                        
+
                         update_field($r, $staticsync_mapped_category_tree, "," . join(",", $path_parts));
-                        }           
+                        }
 
                     #This is an override to add user data to the resouces
                     if(!isset($userref))
@@ -418,23 +476,23 @@ function ProcessFolder($folder,$version_dir)
 										{
 										# archive level is a special case
 										# first determin if the value matches a defined archive level
-										
+
 										$value = $mapfolder["archive"];
 										$archive_array=array_merge(array(-2,-1,0,1,2,3),$additional_archive_states);
-										
+
 										if(in_array($value,$archive_array))
 											{
 											$archiveval = $value;
 											echo "Will set archive level to " . $lang['status' . $value] . " ($archiveval)". PHP_EOL;
 											}
-										
+
 										}
-                                    else 
+                                    else
                                         {
                                         # Save the value
                                         #print_r($path_parts);
                                         $value = $path_parts[$level-1];
-                                        
+
                                         if($staticsync_extension_mapping_append_values){
 											$given_value=$value;
 											// append the values if possible...not used on dropdown, date, categroy tree, datetime, or radio buttons
@@ -444,7 +502,7 @@ function ProcessFolder($folder,$version_dir)
 												$value=append_field_value($field_info,$value,$old_value);
 											}
 										}
-                                        
+
                                         update_field ($r, $field, trim($value));
                                         if(strtotime(trim($value))) {
                                           add_keyword_mappings($r, trim($value), $field, false, true);
@@ -455,14 +513,14 @@ function ProcessFolder($folder,$version_dir)
                                         if($staticsync_extension_mapping_append_values){
 											$value=$given_value;
 										}
-                                        
+
                                         echo " - Extracted metadata from path: $value" . PHP_EOL;
                                         }
                                     }
                                 }
                             }
                         }
-                    
+
                     #Resize only original images.
                     if (!word_in_string($exclude_resize, explode('/', $fullpath))) {
                       echo "Creating preview..";
@@ -481,29 +539,29 @@ function ProcessFolder($folder,$version_dir)
                             $filetype = filetype($altpath . "/" . $altfile);
                             if (($filetype == "file") && (substr($file,0,1) != ".") && (strtolower($file) != "thumbs.db"))
                                 {
-                                # Create alternative file                               
+                                # Create alternative file
                                 # Find extension
                                 $ext = explode(".", $altfile);
                                 $ext = $ext[count($ext)-1];
-                                
+
                                 $description = str_replace("?", strtoupper($ext), $lang["originalfileoftype"]);
                                 $file_size   = filesize_unlimited($altpath . "/" . $altfile);
-                                
+
                                 $aref = add_alternative_file($r, $altfile, $description, $altfile, $ext, $file_size);
                                 $path = get_resource_path($r, true, '', true, $ext, -1, 1, false, '', $aref);
                                 rename($altpath . "/" . $altfile,$path); # Move alternative file
                                 }
-                            }   
+                            }
                         }
 
                     # Add to collection
                     if ($staticsync_autotheme)
                         {
-                        $test = ''; 
+                        $test = '';
                         $test = sql_query("SELECT * FROM collection_resource WHERE collection='$collection' AND resource='$r'");
                         if (count($test) == 0)
                             {
-                            sql_query("INSERT INTO collection_resource (collection, resource, date_added) 
+                            sql_query("INSERT INTO collection_resource (collection, resource, date_added)
                                             VALUES ('$collection', '$r', NOW())");
                             }
                         }
@@ -521,7 +579,7 @@ function ProcessFolder($folder,$version_dir)
                 if (array_key_exists($shortpath,$modtimes) && ($filemod > strtotime($modtimes[$shortpath])))
                     {
                     # File has been modified since we last created previews. Create again.
-                    $rd = sql_query("SELECT ref, has_image, file_modified, file_extension FROM resource 
+                    $rd = sql_query("SELECT ref, has_image, file_modified, file_extension FROM resource
                                         WHERE file_path='" . escape_check($shortpath) . "'");
                     if (count($rd) > 0)
                         {
@@ -545,7 +603,7 @@ function ProcessFolder($folder,$version_dir)
                         # Store original filename in field, if set
                         global $filename_field;
                         if (isset($filename_field)) {
-                            update_field($rref,$filename_field,$file);  
+                            update_field($rref,$filename_field,$file);
                         }
 
                         create_previews($rref, false, $rd["file_extension"], false, false, -1, false, $staticsync_ingest);
@@ -553,39 +611,75 @@ function ProcessFolder($folder,$version_dir)
                         }
                     }
                 }
-            }   
-        }   
+            }
+        }
     }
 
 # Recurse through the folder structure.
+
+$resource_error=array();
+$resource_array = array();
 $version_dir = array();
-ProcessFolder($syncdir, $version_dir);
-$last_sync = sql_query("select name from sysvars where name = 'last_sync'");
-if (empty($last_sync)) {
-    sql_query("insert into sysvars(name,value) values('last_sync', (select creation_date from resource order by ref desc limit 1))");
-}
-else
-{
-    sql_query("update sysvars set value = (select creation_date from resource order by ref desc limit 1) where name = 'last_sync'");
-}
-echo "...done." . PHP_EOL;
+try {
+  ProcessFolder($syncdir, $version_dir, $resource_array, $resource_error);
+} catch (Exception $e) {
+    echo "Failed to sync the images due to : ", $e->getMessage() . PHP_EOL;
+} finally {
+    $last_sync = sql_query("select name from sysvars where name = 'last_sync'");
+    if (empty($last_sync)) {
+      sql_query("insert into sysvars(name,value) values('last_sync', (select creation_date from resource order by ref desc limit 1))");
+    }
+    else {
+      sql_query("update sysvars set value = (select creation_date from resource order by ref desc limit 1) where name = 'last_sync'");
+    }
 
+    $resources = join(',', $resource_array);
+    
+    $barcodes = sql_query("select distinct value from resource_data where resource_type_field =
+                          (select ref from resource_type_field where name = 'barcode') and resource in ('$resources')");
+    if (!empty($barcodes)) {
+      foreach($barcodes as $index => $barcode) {
+        $uri = $media_endpoint . $barcode['value'] . '/refresh.json';
+        $response = send_sync_status($post_host, $uri);
+        if ($response == 200 ) {
+          echo "Sent the response of " . $barcode['value'] . " barcode to media service" . PHP_EOL;
+        }
+        else {
+          echo "The barcode update call to media service failed. For barcode " . $barcode['value'] . PHP_EOL;
+        }
+      }
+    }
 
+    foreach ($resource_error as $type_error => $errors) {
+      $subject = "Errors during syncing due to image " . $type_error;
+      $message = "";
+      $i = 1;
+        foreach ($errors as $index => $value) {
+          $index = $i . " $index";
+          $message .= $index . ' => ' . $value . PHP_EOL;
+          nl2br($message);
+          $i += 1;
+        }
+      $email_status = send_mail($error_email_list, $subject, $message);
+      if(!$email_status) { echo "Failed to send the mail. " . PHP_EOL; }
+    }
+}
+ 
 if (!$staticsync_ingest)
     {
     # If not ingesting files, look for deleted files in the sync folder and archive the appropriate file from ResourceSpace.
     echo "Looking for deleted files..." . PHP_EOL;
     # For all resources with filepaths, check they still exist and archive if not.
     $resources_to_archive = sql_query("SELECT ref,file_path FROM resource WHERE archive=0 AND LENGTH(file_path)>0 AND file_path LIKE '%/%'");
-    
+
     # ***for modified syncdir directories:
     $syncdonemodified = hook("modifysyncdonerf");
-    if (!empty($syncdonemodified)) { $resources_to_archive = $syncdonemodified; } 
-    
-    foreach ($resources_to_archive as $rf) 
+    if (!empty($syncdonemodified)) { $resources_to_archive = $syncdonemodified; }
+
+    foreach ($resources_to_archive as $rf)
         {
         $fp = $syncdir . "/" . $rf["file_path"];
-            
+
         # ***for modified syncdir directories:
         if (isset($rf['syncdir']) && $rf['syncdir'] != '')
             {
@@ -601,7 +695,7 @@ if (!$staticsync_ingest)
             }
         }
     # Remove any themes that are now empty as a result of deleted files.
-    sql_query("DELETE FROM collection WHERE theme IS NOT NULL AND LENGTH(theme) > 0 AND 
+    sql_query("DELETE FROM collection WHERE theme IS NOT NULL AND LENGTH(theme) > 0 AND
                 (SELECT count(*) FROM collection_resource cr WHERE cr.collection=collection.ref) = 0;");
 
     echo "...Complete" . PHP_EOL;
