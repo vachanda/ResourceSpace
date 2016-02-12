@@ -44,8 +44,8 @@ $mysql_verbatim_queries=false;
 $mysql_log_transactions=false;
 #$mysql_log_location="/var/resourcespace_backups/sql_log.sql";
 
-$baseurl="http://my.site/resourcespace"; # The 'base' web address for this installation. Note: no trailing slash
-$email_from="resourcespace@my.site"; # Where system e-mails appear to come from
+#$baseurl="http://my.site/resourcespace"; # The 'base' web address for this installation. Note: no trailing slash
+$email_from="vachan.reports@gmail.com"; # Where system e-mails appear to come from
 $email_notify="resourcespace@my.site"; # Where resource/research/user requests are sent
 
 # Indicates which users can update very low level configuration options for example debug_log.
@@ -762,7 +762,7 @@ $user_preferences = true;
 # List of active plugins.
 # Note that multiple plugins must be specified within array() as follows:
 # $plugins=array("loader","rss","messaging","googledisplay"); 
-$plugins=array("api_collection");
+$plugins=array("");
 
 # Uncomment and set the next line to allow anonymous access. 
 # You must set this to the USERNAME of the USER who will represent all your anonymous users
@@ -1779,12 +1779,12 @@ $image_alternatives["16_9"][0]["target_extension"]="";
 $image_alternatives["16_9"][0]["params"]="-resize 800x450";
 $image_alternatives["16_9"][0]["icc"]=false;
 
-$image_alternatives["16_9"][0]["name"]="1600x900";
-$image_alternatives["16_9"][0]["source_extensions"]="eps,png,gif,jpg";
-$image_alternatives["16_9"][0]["filename"]="1600x900";
-$image_alternatives["16_9"][0]["target_extension"]="";
-$image_alternatives["16_9"][0]["params"]="-resize 1600x900";
-$image_alternatives["16_9"][0]["icc"]=false;
+$image_alternatives["16_9"][1]["name"]="1600x900";
+$image_alternatives["16_9"][1]["source_extensions"]="eps,png,gif,jpg";
+$image_alternatives["16_9"][1]["filename"]="1600x900";
+$image_alternatives["16_9"][1]["target_extension"]="";
+$image_alternatives["16_9"][1]["params"]="-resize 1600x900";
+$image_alternatives["16_9"][1]["icc"]=false;
 # Example - automatically create a PNG file alternative when an EPS file is uploaded.
 # $image_alternatives[0]["name"]="PNG File";
 # $image_alternatives[0]["source_extensions"]="eps";
@@ -1871,7 +1871,7 @@ $paypal_url="https://www.paypal.com/cgi-bin/webscr";
 # Ability to set a field which will store 'Portrait' or 'Landscape' depending on image dimensions
 # $portrait_landscape_field=1;
 
-$error_email_list = "vachan.da@urbanladder.com,ganesh.hegde@urbanladder.com";
+$error_email_list = "vachan.da@urbanladder.com";
 # ------------------------------------------------------------------------------------------------------------------
 # StaticSync (staticsync.php)
 # The ability to synchronise ResourceSpace with a separate and stand-alone filestore.
@@ -1879,6 +1879,9 @@ $error_email_list = "vachan.da@urbanladder.com,ganesh.hegde@urbanladder.com";
 $syncdir="/vol/ume01/resourcespace"; # The sync folder
 $nogo="resized"; # A list of folders to ignore within the sign folder.
 # Maximum number of files to process per execution of staticsync.php
+$post_host="52.76.81.115";
+$image_required_height=3840;
+$media_endpoint="/v1/media_collections/barcodes/";
 $exclude_resize = "raw,psd";
 $staticsync_max_files = 10000;
 $staticsync_autotheme=true; # Automatically create themes based on the first and second levels of the sync folder structure.
@@ -1914,25 +1917,25 @@ $staticsync_defaultstate=0;
 $staticsync_mapfolders[0]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>74,
+		"field"=>73,
 		"level"=>1
 		);
 $staticsync_mapfolders[1]=array
 		(
 		"match"=>"/second_sales/",
-		"field"=>74,
+		"field"=>73,
 		"level"=>1
 		);
 $staticsync_mapfolders[2]=array
 		(
 		"match"=>"/Catalog/",
-		"field"=>73,
+		"field"=>74,
 		"level"=>2
 		);
 $staticsync_mapfolders[3]=array
 		(
 		"match"=>"/second_sales/",
-		"field"=>73,
+		"field"=>74,
 		"level"=>2
 		);
 $staticsync_mapfolders[4]=array
@@ -2151,7 +2154,7 @@ $mp3_player=true;
 # Show the performance metrics in the footer (for debug)
 $config_show_performance_footer=false;
 
-$use_phpmailer=false;
+$use_phpmailer=true;
 
 # Allow to disable thumbnail generation during batch resource upload from FTP or local folder.
 # In addition to this option, a multi-thread thumbnail generation script is available in the batch
@@ -2306,7 +2309,7 @@ $U_perm_strict=false;
 
 # enable remote apis (if using API, RSS2, or other plugins that allow remote authentication via an api key)
 $enable_remote_apis=true;
-$api_scramble_key="abcdef123";
+$api_scramble_key="abcdef1234";
 
 # Allow users capable of deleting a full collection (of resources) to do so from the Collection Manage page.
 $collection_purge=false;
@@ -2448,13 +2451,13 @@ $pager_dropdown=false;
 
 # Use an external SMTP server for outgoing emails (e.g. Gmail).
 # Requires $use_phpmailer.
-$use_smtp=false;
+$use_smtp=true;
 # SMTP settings:
-$smtp_secure=''; # '', 'tls' or 'ssl'. For Gmail, 'tls' or 'ssl' is required.
-$smtp_host=''; # Hostname, e.g. 'smtp.gmail.com'.
-$smtp_port=25; # Port number, e.g. 465 for Gmail using SSL.
+$smtp_secure='tls'; # '', 'tls' or 'ssl'. For Gmail, 'tls' or 'ssl' is required.
+$smtp_host='smtp.gmail.com'; # Hostname, e.g. 'smtp.gmail.com'.
+$smtp_port=587; # Port number, e.g. 465 for Gmail using SSL.
 $smtp_auth=true; # Send credentials to SMTP server (false to use anonymous access)
-$smtp_username=''; # Username (full email address).
+$smtp_username='vachan.reports'; # Username (full email address).
 $smtp_password=''; # Password.
 
 $sharing_userlists=false; // enable users to save/select predefined lists of users/groups when sharing collections and resources.
