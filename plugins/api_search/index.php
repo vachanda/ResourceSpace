@@ -93,18 +93,18 @@ if (getval("results_per_page","")!="" || getval("page","")!=""){
     // build a new array with pagination info
     $pagination=array();
     $pagination["total_pages"]=ceil(count($results)/$results_per_page);
-    
+
     // default to first page if an invalid page is given.
     if ($page>$pagination["total_pages"]){
         $page=1;
         $min_result=0;
         $max_result=$results_per_page-1;
     }
-    
+
     $pagination["total_resources"]=count($results);
     $pagination["per_page"]=$results_per_page;
     $pagination["page"]=$page;
-    
+
 
     /* commented out as it should probably be done application side
     // build a next/prev query strings for easier pagination:
@@ -127,7 +127,7 @@ if (getval("results_per_page","")!="" || getval("page","")!=""){
     //  $pagination["previous_page"]=$newquery."&page=".($page-1);
     // }
     */
-    
+
     $newresult=array();
     for ($n=0;$n<count($results);$n++){
         if (($n>=$min_result) && $n<=$max_result){
@@ -188,12 +188,12 @@ if (getval("flvfile","")!=""){
                 {
                 $flashpath=get_resource_path($results[$n]['ref'],false,"pre",false,$ffmpeg_preview_extension,-1,1,false,"",-1,false);
                 }
-            else 
+            else
                 {
                 $flashpath=get_resource_path($results[$n]['ref'],false,"",false,$ffmpeg_preview_extension,-1,1,false,"",-1,false);
                 }
             $results[$n]['flvpath']=$flashpath;
-            $thumb=get_resource_path($results[$n]['ref'],false,"pre",false,"jpg"); 
+            $thumb=get_resource_path($results[$n]['ref'],false,"pre",false,"jpg");
             $results[$n]['flvthumb']=$thumb;
         }
     }
@@ -215,10 +215,9 @@ if ($modified_result){
 	$results=$modified_result;
 }
 
- // this function in api_core   
+ // this function in api_core
 $results=refine_api_resource_results($results);
 $limit_to=getval("limit_to","");
-
 if($metadata) {
 
     global $api_search_full_field_data;
@@ -232,8 +231,9 @@ if($metadata) {
     foreach ($fields as $field) {
         $full_fields_options['field' . $field['ref']] = $field['title'];
     }
+
     for($i = 0; $i < count($results); $i++) {
-    
+
         $full_field_data_ids_list = '';
 
         // Build list of IDs of field types to return full data for:
@@ -264,12 +264,11 @@ if($metadata) {
             $full_field_data_ids_list
         );
 
-        
         $metadata_values = sql_query($query, '');
-            
+
         // Replace the values:
         foreach ($metadata_values as $metadata_field) {
-            
+
             if(!$prettyfieldnames && array_key_exists('field' . $metadata_field['resource_type_field'], $full_fields_options) || array_key_exists('field' . $metadata_field['resource_type_field'], $results[$i])) {
                 $results[$i]['field' . $metadata_field['resource_type_field']] = $metadata_field['value'];
             }
@@ -281,57 +280,54 @@ if($metadata) {
         }
 
         $results[$i] = array_change_key_case($results[$i], CASE_LOWER);
-
-        #Display only current version of images.
-        if(!isset($results[$i]['current'])) {
-            unset($results[$i]);
-            continue;
-            }
-
-        if($results[$i]['image_state'] !== "images") {
-            unset($results[$i]);
-            continue;
-            }
-
-        if (!isset($results[$i]['aspect_ratio'])) {
-          continue;
-        }
-        #Restructure the Results JSON.
-        $im_identify_path = get_utility_path('im-identify');
-        $get_height_cmd = $im_identify_path . " -format '%[fx:h]' ";
-        $get_width_cmd = $im_identify_path . " -format '%[fx:w]' ";
-
-        $sizes = array();
-
-        $image_classification = $results[$i]['aspect_ratio'];
-        #if (!isset($image_classification)) {
-        #    $image_classification = $results[$i]['Image_Classification'];
-        #}
-
-        foreach ($image_alternatives[trim($image_classification)] as $index => $value) {
-            $path_array = explode('/', $results[$i]['original_filepath']);
-            array_pop($path_array);
-            array_pop($path_array);
-            $alt_path = implode('/', $path_array) . '/resized/' . $value['filename'] . '/' . $results[$i]['title'] . '_' . $value['filename'] .'.' . $results[$i]['file_extension'] ;
-            $alt_height_cmd = $get_height_cmd . $alt_path;
-            $alt_width_cmd = $get_width_cmd . $alt_path;
-            $sizes[$value['name']]['file_path'] = $alt_path;
-            $sizes[$value['name']]['size'] = array('height' => shell_exec($alt_height_cmd), 'width' => shell_exec($alt_width_cmd));
-        }
-
-        $get_height_cmd .= $results[$i]['original_filepath'];
-        $get_width_cmd .= $results[$i]['original_filepath'];
-
-        $sizes['original']['file_path']  = $results[$i]['original_filepath'];
-
-        $sizes['original']['size'] = array('height' => shell_exec($get_height_cmd), 'width' => shell_exec($get_width_cmd));
-
-        $results[$i]['sizes'] = $sizes;
-
-        unset($results[$i]['original_filepath']);
-        ksort($results[$i]);
     }
 }
+
+$new_results = array();
+$results = array_values($results);
+
+foreach ($results as $index => $value) {
+    if((!array_key_exists('current', $value)) || (!array_key_exists('aspect_ratio', $value))) {
+        continue;
+    }
+
+    $alt_array = sql_query("SELECT ref,name FROM resource_alt_files WHERE resource = " . $value['ref']);
+
+    #Restructure the Results JSON.
+
+    $im_identify_path = get_utility_path('im-identify');
+    $get_height_cmd = $im_identify_path . " -format '%[fx:h]' ";
+    $get_width_cmd = $im_identify_path . " -format '%[fx:w]' ";
+    $sizes = array();
+
+    #if (!isset($image_classification)) {
+    #    $image_classification = $results[$i]['Image_Classification'];
+    #}
+
+    foreach ($alt_array as $index => $alt_value) {
+        $alt_path = get_resource_path($value['ref'], TRUE, '', FALSE, $value['file_extension'], -1, 1, FALSE, '', $alt_value['ref']);
+        $alt_path = readlink($alt_path);
+        $alt_height_cmd = $get_height_cmd . $alt_path;
+        $alt_width_cmd = $get_width_cmd . $alt_path;
+        $sizes[$alt_value['name']]['file_path'] = $alt_path;
+        $sizes[$alt_value['name']]['size'] = array('height' => trim(shell_exec($alt_height_cmd)), 'width' => trim(shell_exec($alt_width_cmd)));
+    }
+
+        $get_height_cmd .= $value['original_filepath'];
+        $get_width_cmd .= $value['original_filepath'];
+
+        $sizes['original']['file_path']  = $value['original_filepath'];
+
+        $sizes['original']['size'] = array('height' => trim(shell_exec($get_height_cmd)), 'width' => trim(shell_exec($get_width_cmd)));
+
+        $value['sizes'] = $sizes;
+
+        unset($value['original_filepath']);
+        ksort($value);
+        array_push($new_results, $value);
+}
+
+        file_put_contents("/tmp/search_functions_65.txt", print_r(count($new_results), true));
 
 if (getval("content","")=="xml" && !$paginate){
     header('Content-type: application/xml');
@@ -347,7 +343,7 @@ if (getval("content","")=="xml" && !$paginate){
 		} else {
 				echo $result;
 			}
-        
+
         if ($limit_to!=""){echo "</$limit_to>";} else {echo '</resource>';}
     }
     echo '</results>';
@@ -356,7 +352,7 @@ if (getval("content","")=="xml" && !$paginate){
 else if (getval("content","")=="xml" && $paginate){
 
 	$resources=$results;
-   
+
     header('Content-type: application/xml');
     echo '<?xml version="1.0" encoding="UTF-8"?>';
     echo '<results>';
@@ -368,7 +364,7 @@ else if (getval("content","")=="xml" && $paginate){
         echo '</'.$resultitem.'>';
     }
 
-    
+
     echo '</pagination>';
     echo '<resources>';
     foreach ($resources as $result){
@@ -393,7 +389,13 @@ else {
     if ($paginate) {
         $results = array('resources' => $results, 'pagination' => $pagination);
     }
-     
-    $results = array_values($results); 
-    echo json_encode($results); // echo json without headers by default
-} 
+
+    $new_result = array();
+    foreach($new_results as $index => $value) {
+      if($value['aspect_ratio'] == '16_9') {unset($value['sizes']['400x400']); unset($value['sizes']['720x720']);}
+      if($value['photo_type'] == 'long_shots') { $value['photo_type'] = 'long_shot';}
+      if($value['photo_type'] == 'close_up_shots') { $value['photo_type'] = 'close_up_shot';}
+      array_push($new_result, $value);
+    }
+    echo json_encode($new_result); // echo json without headers by default
+}

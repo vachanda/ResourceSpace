@@ -758,7 +758,6 @@ function do_search($search,$restypes="",$order_by="relevance",$archive=0,$fetchr
     if ($search_sql_double_pass_mode && $fetchrows!=-1) {$max_results=$fetchrows;}
 
     $results_sql=$sql_prefix . "select distinct $score score, $select from resource r" . $t . "  where $t2 $sql group by r.ref order by $order_by limit $max_results" . $sql_suffix;
-
     # Debug
     debug('$results_sql=' . $results_sql);
 

@@ -942,12 +942,13 @@ function create_previews($ref,$thumbonly=false,$extension="jpg",$previewonly=fal
 
 	if (isset($image_alternatives) && $alternative==-1) {
 		foreach ($image_alternatives as $classification => $resize_image) {
-			$temp_query = "select resource_type_field from resource_data where value rlike '$classification' and resource = '$ref'";
+			$temp_query = "select resource_type_field from resource_data where value = '$classification' and resource = '$ref'";
         	$classification_ref = sql_query($temp_query);
         	if(empty($classification_ref)) {
             	continue;
         	}
         	foreach ($resize_image as $index => $resize_value) {
+                #print_r($resize_image);
             	$exts=explode(",",$resize_value["source_extensions"]);
             	if (in_array($extension,$exts)) {
                 # Remove any existing alternative file(s) with this name.
