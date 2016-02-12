@@ -3,6 +3,7 @@
 
 include_once ("language_functions.php");
 include_once "message_functions.php";
+include dirname(__FILE__) . "/config.default.php";
 
 $GLOBALS['get_resource_path_fpcache'] = array();
 function get_resource_path($ref,$getfilepath,$size,$generate=true,$extension="jpg",$scramble=-1,$page=1,$watermarked=false,$file_modified="",$alternative=-1,$includemodified=true)
@@ -1883,7 +1884,6 @@ function send_mail_phpmailer($email,$subject,$message="",$from="",$reply_to="",$
 	if ($reply_to=="") {$reply_to=$email_from;}
 	global $applicationname;
 	if ($from_name==""){$from_name=$applicationname;}
-	
 	#check for html template. If exists, attempt to include vars into message
 	if ($html_template!="")
 		{
@@ -2036,7 +2036,7 @@ function send_mail_phpmailer($email,$subject,$message="",$from="",$reply_to="",$
 		$mail->Password = $smtp_password; // password
 	}
 	$reply_tos=explode(",",$reply_to);
-
+        if(empty($reply_tos)) { array_push($reply_tos, $reply_to); }
 	// only one from address is possible, so only use the first one:
 	if (strstr($reply_tos[0],"<")){
 		$rtparts=explode("<",$reply_tos[0]);
@@ -2047,7 +2047,6 @@ function send_mail_phpmailer($email,$subject,$message="",$from="",$reply_to="",$
 		$mail->From = $reply_tos[0];
 		$mail->FromName = $from_name;
 	}
-	
 	// if there are multiple addresses, that's what replyto handles.
 	for ($n=0;$n<count($reply_tos);$n++){
 		if (strstr($reply_tos[$n],"<")){
@@ -2138,7 +2137,7 @@ function send_mail_phpmailer($email,$subject,$message="",$from="",$reply_to="",$
 		echo "Mailer Error: " . $mail->ErrorInfo;
 		exit;
 		}
-	hook("aftersendmailphpmailer","",$email);	
+	#hook("aftersendmailphpmailer","",$email);	
 }
 }
 
