@@ -327,8 +327,6 @@ foreach ($results as $index => $value) {
         array_push($new_results, $value);
 }
 
-        file_put_contents("/tmp/search_functions_65.txt", print_r(count($new_results), true));
-
 if (getval("content","")=="xml" && !$paginate){
     header('Content-type: application/xml');
     echo '<?xml version="1.0" encoding="UTF-8"?><results>';
@@ -390,12 +388,12 @@ else {
         $results = array('resources' => $results, 'pagination' => $pagination);
     }
 
-    $new_result = array();
-    foreach($new_results as $index => $value) {
-      if($value['aspect_ratio'] == '16_9') {unset($value['sizes']['400x400']); unset($value['sizes']['720x720']);}
-      if($value['photo_type'] == 'long_shots') { $value['photo_type'] = 'long_shot';}
-      if($value['photo_type'] == 'close_up_shots') { $value['photo_type'] = 'close_up_shot';}
-      array_push($new_result, $value);
-    }
-    echo json_encode($new_result); // echo json without headers by default
+   # $new_result = array();
+   # foreach($new_results as $index => $value) {
+   #   if($value['aspect_ratio'] == '16_9') {unset($value['sizes']['400x400']); unset($value['sizes']['720x720']);}
+   #   if($value['photo_type'] == 'long_shots') { $value['photo_type'] = 'long_shot';}
+   #   if($value['photo_type'] == 'close_up_shots') { $value['photo_type'] = 'close_up_shot';}
+   #   array_push($new_result, $value);
+   # }
+    echo json_encode($new_results); // echo json without headers by default
 }
