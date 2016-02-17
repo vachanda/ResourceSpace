@@ -3,6 +3,8 @@ include dirname(__FILE__) . "/../../include/db.php";
 include dirname(__FILE__) . "/../../include/general.php";
 include dirname(__FILE__) . "/../../include/resource_functions.php";
 include dirname(__FILE__) . "/../../include/image_processing.php";
+require "../../vendor/autoload.php";
+use Aws\S3\S3Client;
 
 $sapi_type = php_sapi_name();
 if (substr($sapi_type, 0, 3) != 'cli')
@@ -123,6 +125,28 @@ function touch_category_tree_level($path_parts)
         }
     }
 
+function sync_to_s3($syncdir, $bucket, $aws_key, $aws_secret_key) {
+  try {
+    $s3Client = S3Client::factory(array( 
+                  'key' => $aws_key,
+                  'secret' => $aws_secret_key,
+                  'region' => 'ap-southeast-1', 
+                  'version' => '2006-03-01' ));
+
+    $options = array(
+      'concurrency' => 20
+    );
+    
+    $status = $s3Client->uploadDirectory($syncdir, $bucket, $syncdir, $options);
+    echo "Synced image to s3. " . $status . PHP_EOL;
+    return true;
+  } catch (\Aws\S3\Exception\S3Exception $e) {
+      echo "Failed to sync images to s3." . PHP_EOL;
+      echo $e->getMessage() . PHP_EOL;
+      return false;
+    }
+}
+
 function word_in_string($words, $string_array) {
    $word_array = explode(',', $words);
    $contains = array_intersect($word_array, $string_array);
@@ -153,20 +177,32 @@ function send_sync_status($host, $uri, $protocol="http", $fields=array()) {
 	return $httpcode;
 }
 
-function validate_image_size($fullpath, $image_height) {
+function get_image_dimension($fullpath, $type) {
     $im_identify_path = get_utility_path('im-identify');
-    $get_height_cmd = $im_identify_path . " -format '%[fx:h]' ";
-    $get_width_cmd = $im_identify_path . " -format '%[fx:w]' ";
+    if ($type == "height") {
+      $get_dimension_cmd = $im_identify_path . " -format '%[fx:h]' ";
+    }
+    elseif ($type == "width") {
+      $get_dimension_cmd = $im_identify_path . " -format '%[fx:w]' ";
+    }
+    else {
+      echo "The value of the type variable is incorrect. " . PHP_EOL;
+    }
+    
+    $get_dimension_cmd .= $fullpath;
 
-    $get_height_cmd .= $fullpath;
-    $get_width_cmd .= $fullpath;
+    $value = shell_exec($get_dimension_cmd);
+    return $value;
+}
 
-    $height = shell_exec($get_height_cmd);
-    $width = shell_exec($get_width_cmd);
+function validate_image_size($fullpath, $image_height) {
 
+    $height = get_image_dimension($fullpath, "height");
     if ($height !== $image_height) {
         return false;
     }
+    
+    $width = get_image_dimension($fullpath, "width");
 
     $aspect_ratio_array = explode('/', $fullpath);
     array_pop($aspect_ratio_array);
@@ -175,7 +211,7 @@ function validate_image_size($fullpath, $image_height) {
 
     $multiply_values = explode('_', $aspect_ratio);
     $calculated_width = $height * $multiply_values[1] / $multiply_values[0];
-
+   
     if ($width !== $calculated_width ) {
         return false;
     }
@@ -190,7 +226,7 @@ function ProcessFolder($folder,$version_dir, &$resource_array, &$resource_error)
            $staticsync_extension_mapping, $staticsync_mapped_category_tree, $staticsync_title_includes_path,
            $staticsync_ingest, $staticsync_mapfolders, $staticsync_alternatives_suffix, $theme_category_levels, $staticsync_defaultstate,
            $additional_archive_states,$staticsync_extension_mapping_append_values, $image_alternatives, $exclude_resize, $post_host, $media_endpoint,
-           $image_required_height;
+           $image_required_height, $sync_bucket, $aws_key, $aws_secret_key;
 
     $collection = 0;
 
@@ -237,15 +273,15 @@ function ProcessFolder($folder,$version_dir, &$resource_array, &$resource_error)
             (strpos($file, $staticsync_alternatives_suffix) === false))
             {
             # Get current version direcotries.
-            if (preg_match("/^[0-9]{2}-[0-9]{2}-[0-9]{4}$/", $file)) {
+            if (preg_match("/[0-9]{2}-[0-9]{2}-[0-9]{4}$/", $file)) {
               if(!in_array($file, $version_dir)) {
                     array_push($version_dir, $file);
               }
 
-              if (preg_match('/processing/', $file)) {
+              if (preg_match('/in_progress*/', $file)) {
                    echo "The Barcode is still being processed." . PHP_EOL;
                    continue;
-                 }
+              }
             }
             # Recurse
             ProcessFolder($folder . "/" . $file,$version_dir, $resource_array, $resource_error);
@@ -362,30 +398,26 @@ function ProcessFolder($folder,$version_dir, &$resource_array, &$resource_error)
                 #$r = import_resource($shortpath, $type, $title, $staticsync_ingest);
                 #Check for file name containing the psd.
 
-
-                if(isset($psd_files)) {
-                  if (!validate_image_size($fullpath, $image_required_height)) {
-                    $resource_error['size'][$file] =  $fullpath;
-                  }
+                if(!empty($psd_files)) {
                   $image_file_array = explode('/', $fullpath);
                   $image_file = $image_file_array[count($image_file_array)-1];
                   $image_psd_name = explode('_', $image_file)[0];
                   if(array_search($image_psd_name, $psd_files)) {
-                     #Image name is in right format.
-                     $r = import_resource($fullpath, $type, $title, $staticsync_ingest);
-
-                     sql_query("INSERT INTO resource_data (resource,resource_type_field,value)
-                                VALUES ('$r', (SELECT ref FROM resource_type_field WHERE name = 'logical_id'), '$image_psd_name')");
-
-                     $original_filepath = sql_query("SELECT value FROM resource_data WHERE resource = '$r' AND
-                                                     resource_type_field = (SELECT ref FROM resource_type_field where name = 'original_filepath')");
-                     if (isset($original_filepath)) {
-                       sql_query("INSERT INTO resource_data (resource,resource_type_field,value)
-                                  VALUES ('$r',(SELECT ref FROM resource_type_field WHERE name = 'original_filepath'), '$fullpath')");
-                     }
-                  }
-                  elseif(word_in_string($exclude_resize, explode('/', $fullpath))) {
+                    #Image name is in right format.
+                    if (!validate_image_size($fullpath, $image_required_height)) {
+                     $resource_error['size'][$file] =  $fullpath;
+                    }
                     $r = import_resource($fullpath, $type, $title, $staticsync_ingest);
+
+                    sql_query("INSERT INTO resource_data (resource,resource_type_field,value)
+                               VALUES ('$r', (SELECT ref FROM resource_type_field WHERE name = 'logical_id'), '$image_psd_name')");
+
+                    $original_filepath = sql_query("SELECT value FROM resource_data WHERE resource = '$r' AND
+                                                     resource_type_field = (SELECT ref FROM resource_type_field where name = 'original_filepath')");
+                    if (isset($original_filepath)) {
+                      sql_query("INSERT INTO resource_data (resource,resource_type_field,value)
+                                 VALUES ('$r',(SELECT ref FROM resource_type_field WHERE name = 'original_filepath'), '$fullpath')");
+                     }
                   }
                   else {
                     echo "Filename '$fullpath' is not in right format.." . PHP_EOL;
@@ -393,6 +425,10 @@ function ProcessFolder($folder,$version_dir, &$resource_array, &$resource_error)
                     continue;
                   }
                 }
+                elseif(word_in_string($exclude_resize, explode('/', $fullpath))) {
+                  $r = import_resource($fullpath, $type, $title, $staticsync_ingest);
+                }
+
 
                 if ($r !== false)
                     {
@@ -403,6 +439,9 @@ function ProcessFolder($folder,$version_dir, &$resource_array, &$resource_error)
                         sql_query("INSERT into resource_data (resource,resource_type_field,value)
                                     VALUES ('$r',(SELECT ref FROM resource_type_field WHERE name = 'current'), 'TRUE')");
                     }
+
+                    $sync_status = sync_to_s3($syncdir, $sync_bucket, $aws_key, $aws_secret_key);
+                    if (!$sync_status) { echo "Failed to sync"; }
                     # Add to mapped category tree (if configured)
                     if (isset($staticsync_mapped_category_tree))
                         {
@@ -617,7 +656,7 @@ function ProcessFolder($folder,$version_dir, &$resource_array, &$resource_error)
 
 # Recurse through the folder structure.
 
-$resource_error=array();
+$resource_error = array();
 $resource_array = array();
 $version_dir = array();
 try {
@@ -632,8 +671,8 @@ try {
     else {
       sql_query("update sysvars set value = (select creation_date from resource order by ref desc limit 1) where name = 'last_sync'");
     }
-
-    $resources = join(',', $resource_array);
+    
+    $resources = join('\',\'', $resource_array);
     
     $barcodes = sql_query("select distinct value from resource_data where resource_type_field =
                           (select ref from resource_type_field where name = 'barcode') and resource in ('$resources')");
@@ -651,15 +690,34 @@ try {
     }
 
     foreach ($resource_error as $type_error => $errors) {
-      $subject = "Errors during syncing due to image " . $type_error;
+      $subject = "Errors during syncing due to image ." . $type_error;
       $message = "";
+      $message = '<html><body>';
+      $message .= '<table width="100%"; rules="all" style="border:1px solid #3A5896;" cellpadding="10">';
+      $message .= "<tr><th>" . "Index" . "</th><th>" . "Filename" . "</th><th>" . "Filepath" . "</th></tr>";
+
+      if ($type_error == "size") {
+        $subject = "Errors during syncing due to incorrect image dimensions.";
+        $message = "";
+        $message = '<html><body>';
+        $message .= '<table width="100%"; rules="all" style="border:1px solid #3A5896;" cellpadding="10">';
+        $message .= "<tr><th>" . "Index" . "</th><th>" . "Filename" . "</th><th>" . "Filepath" . "</th><th>" . "Image Size" . "</th></tr>";
+      }
+
       $i = 1;
         foreach ($errors as $index => $value) {
-          $index = $i . " $index";
-          $message .= $index . ' => ' . $value . PHP_EOL;
-          nl2br($message);
+          if ($type_error == "name") {
+            $message .= "<tr><td>" . $i . "</td><td>" . $index . "</td><td>" . $value . "</td></tr>";
+          }
+          elseif ($type_error == "size") {
+            $height = get_image_dimension($value, "height");
+            $width = get_image_dimension($value, "width");
+            $message .= "<tr><td>" . $i . "</td><td>" . $index . "</td><td>" . $value . "</td><td>" . "$width x $height" . "</td></tr>" ;
+          }
           $i += 1;
         }
+      $message .= "</table>";
+      $message .= "</body></html>";
       $email_status = send_mail($error_email_list, $subject, $message);
       if(!$email_status) { echo "Failed to send the mail. " . PHP_EOL; }
     }
