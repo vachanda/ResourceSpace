@@ -1748,43 +1748,58 @@ $image_alternatives["1_1"][0]["name"]="400x400";
 $image_alternatives["1_1"][0]["source_extensions"]="eps,png,gif,jpg";
 $image_alternatives["1_1"][0]["filename"]="400x400";
 $image_alternatives["1_1"][0]["target_extension"]="";
-$image_alternatives["1_1"][0]["params"]="-resize 400x400";
+$image_alternatives["1_1"][0]["params"]="-resize 400x400\!";
 $image_alternatives["1_1"][0]["icc"]=false;
 
 $image_alternatives["1_1"][1]["name"]="720x720";
 $image_alternatives["1_1"][1]["source_extensions"]="eps,png,gif,jpg";
 $image_alternatives["1_1"][1]["filename"]="720x720";
 $image_alternatives["1_1"][1]["target_extension"]="";
-$image_alternatives["1_1"][1]["params"]="-resize 720x720";
+$image_alternatives["1_1"][1]["params"]="-resize 720x720\!";
 $image_alternatives["1_1"][1]["icc"]=false;
+
+$image_alternatives["1_1"][2]["name"]="50x50";
+$image_alternatives["1_1"][2]["source_extensions"]="eps,png,gif,jpg";
+$image_alternatives["1_1"][2]["filename"]="50x50";
+$image_alternatives["1_1"][2]["target_extension"]="";
+$image_alternatives["1_1"][2]["params"]="-resize 50x50\!";
+$image_alternatives["1_1"][2]["icc"]=false;
 
 $image_alternatives["4_3"][0]["name"]="400x300";
 $image_alternatives["4_3"][0]["source_extensions"]="eps,png,gif,jpg";
 $image_alternatives["4_3"][0]["filename"]="400x300";
 $image_alternatives["4_3"][0]["target_extension"]="";
-$image_alternatives["4_3"][0]["params"]="-resize 400x300";
+$image_alternatives["4_3"][0]["params"]="-resize 400x300\!";
 $image_alternatives["4_3"][0]["icc"]=false;
 
 $image_alternatives["4_3"][1]["name"]="1600x1200";
 $image_alternatives["4_3"][1]["source_extensions"]="eps,png,gif,jpg";
 $image_alternatives["4_3"][1]["filename"]="1600x1200";
 $image_alternatives["4_3"][1]["target_extension"]="";
-$image_alternatives["4_3"][1]["params"]="-resize 1600x1200";
+$image_alternatives["4_3"][1]["params"]="-resize 1600x1200\!";
 $image_alternatives["4_3"][1]["icc"]=false;
 
-$image_alternatives["16_9"][0]["name"]="800x450";
+$image_alternatives["16_9"][0]["name"]="666x363";
 $image_alternatives["16_9"][0]["source_extensions"]="eps,png,gif,jpg";
-$image_alternatives["16_9"][0]["filename"]="800x450";
+$image_alternatives["16_9"][0]["filename"]="666x363";
 $image_alternatives["16_9"][0]["target_extension"]="";
-$image_alternatives["16_9"][0]["params"]="-resize 800x450";
+$image_alternatives["16_9"][0]["params"]="-resize 666x363\!";
 $image_alternatives["16_9"][0]["icc"]=false;
 
-$image_alternatives["16_9"][1]["name"]="1600x900";
+$image_alternatives["16_9"][1]["name"]="65x37";
 $image_alternatives["16_9"][1]["source_extensions"]="eps,png,gif,jpg";
-$image_alternatives["16_9"][1]["filename"]="1600x900";
+$image_alternatives["16_9"][1]["filename"]="65x37";
 $image_alternatives["16_9"][1]["target_extension"]="";
-$image_alternatives["16_9"][1]["params"]="-resize 1600x900";
+$image_alternatives["16_9"][1]["params"]="-resize 65x37\!";
 $image_alternatives["16_9"][1]["icc"]=false;
+
+$image_alternatives["16_9"][2]["name"]="330x180";
+$image_alternatives["16_9"][2]["source_extensions"]="eps,png,gif,jpg";
+$image_alternatives["16_9"][2]["filename"]="330x180";
+$image_alternatives["16_9"][2]["target_extension"]="";
+$image_alternatives["16_9"][2]["params"]="-resize 330x180\!";
+$image_alternatives["16_9"][2]["icc"]=false;
+
 # Example - automatically create a PNG file alternative when an EPS file is uploaded.
 # $image_alternatives[0]["name"]="PNG File";
 # $image_alternatives[0]["source_extensions"]="eps";
@@ -1871,12 +1886,15 @@ $paypal_url="https://www.paypal.com/cgi-bin/webscr";
 # Ability to set a field which will store 'Portrait' or 'Landscape' depending on image dimensions
 # $portrait_landscape_field=1;
 
-$error_email_list = "vachan.da@urbanladder.com";
+$error_email_list = "vachan.da@urbanladder.com,rahul.sarika@urbanladder.com";
 # ------------------------------------------------------------------------------------------------------------------
 # StaticSync (staticsync.php)
 # The ability to synchronise ResourceSpace with a separate and stand-alone filestore.
 # ------------------------------------------------------------------------------------------------------------------
 $syncdir="/vol/ume01/resourcespace"; # The sync folder
+$sync_bucket="s3://ul-dev.resourcespace";
+$aws_key = "";
+$aws_secret_key = "";
 $nogo="resized"; # A list of folders to ignore within the sign folder.
 # Maximum number of files to process per execution of staticsync.php
 $post_host="52.76.81.115";
